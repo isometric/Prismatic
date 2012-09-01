@@ -72,7 +72,6 @@ public class CubismCube {
 	private final float[] mMatrixRotate = new float[16];
 	private final float[] mMatrixScale = new float[16];
 	private final float[] mMatrixTranslate = new float[16];
-	private final float[] mMatrixView = new float[16];
 
 	public CubismCube() {
 		Matrix.setIdentityM(mMatrixRotate, 0);
@@ -85,10 +84,6 @@ public class CubismCube {
 		Matrix.multiplyMM(mMatrixModel, 0, mMatrixRotate, 0, mMatrixScale, 0);
 		Matrix.multiplyMM(mMatrixModel, 0, mMatrixTranslate, 0, mMatrixModel, 0);
 		return mMatrixModel;
-	}
-
-	public void setLookAt(float lx, float ly, float lz) {
-		Matrix.setLookAtM(mMatrixView, 0, lx, ly, lz, 0f, 0f, 0f, 0f, 1f, 0f);
 	}
 
 	public void setRotate(float rx, float ry, float rz) {
