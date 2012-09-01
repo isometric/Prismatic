@@ -50,7 +50,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		mCube.mCube.setScale(-6f);
 
 		int idx = 0;
-		int size = 20;
+		int size = 10;
 		mCubes = new StructCube[size * size * 2 + size * (size - 2) * 2
 				+ (size - 2) * (size - 2) * 2];
 		for (int x = 0; x < size; ++x) {
@@ -374,11 +374,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 
 	private class StructCube {
 		public final CubismCube mCube = new CubismCube();
-		public final float[] mMatrixLightModelView = new float[16];
-		public final float[] mMatrixLightModelViewProj = new float[16];
 		public final float[] mMatrixModel = new float[16];
-		public final float[] mMatrixModelView = new float[16];
-		public final float[] mMatrixModelViewProj = new float[16];
 
 		public final float[] mPosition = new float[3];
 		public final float[] mPositionSource = new float[3];
