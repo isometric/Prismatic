@@ -369,7 +369,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		}
 
 		GLES20.glUniformMatrix4fv(uModelM, 1, false, mCube.mMatrixModel, 0);
-		GLES20.glUniform3f(uColor, .6f, .6f, .6f);
+		GLES20.glUniform3f(uColor, .5f, .5f, .5f);
 
 		GLES20.glVertexAttribPointer(aNormal, 3, GLES20.GL_BYTE, false, 0,
 				CubismCube.getNormalsInv());

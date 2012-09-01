@@ -36,5 +36,5 @@ void main() {
 	
 	const float c = 8.0;
 	vec4 texel = textureCube(sShadowMap, lightVec);
-	gl_FragColor.rgb *= clamp(exp(-c * (depth - unpack(texel))), 0.5, 1.0);
+	gl_FragColor.rgb *= clamp(exp(-c * (depth - unpack(texel))), 0.6, 1.0);
 }
