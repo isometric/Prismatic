@@ -32,6 +32,11 @@ public class CubismActivity extends Activity {
 	private CubismRenderer mRenderer;
 
 	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+	}
+
+	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -56,11 +61,6 @@ public class CubismActivity extends Activity {
 						mRenderer.onMusicRepeat();
 					}
 				});
-	}
-
-	@Override
-	public void onConfigurationChanged(Configuration newConfig) {
-		super.onConfigurationChanged(newConfig);
 	}
 
 	@Override

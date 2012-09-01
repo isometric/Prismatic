@@ -50,7 +50,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		mCube.mCube.setScale(-6f);
 
 		int idx = 0;
-		int size = 10;
+		int size = 20;
 		mCubes = new StructCube[size * size * 2 + size * (size - 2) * 2
 				+ (size - 2) * (size - 2) * 2];
 		for (int x = 0; x < size; ++x) {
@@ -111,7 +111,18 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 
 	@Override
 	public void onDrawFrame(GL10 unused) {
+		// Render shadow map.
+		mFbo.bind();
+		mFbo.bindTexture(0);
+		GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 		renderShadowMap();
+
+		// Copy offscreen buffer to screen.
+		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+		GLES20.glViewport(0, 0, mWidth, mHeight);
+		GLES20.glClearColor(0.4f, 0.5f, 0.6f, 1.0f);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 		renderCombine();
 
 		mActivity.queueGLEvent();
@@ -202,30 +213,6 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 					cube.mCube.getModelM(), 0);
 		}
 		System.arraycopy(mCube.mCube.getModelM(), 0, mCube.mMatrixModel, 0, 16);
-
-		for (StructCube cube : mCubes) {
-			Matrix.multiplyMM(cube.mMatrixModelView, 0, Globals.mMatrixView, 0,
-					cube.mMatrixModel, 0);
-			Matrix.multiplyMM(cube.mMatrixModelViewProj, 0,
-					Globals.mMatrixPerspective, 0, cube.mMatrixModelView, 0);
-
-			Matrix.multiplyMM(cube.mMatrixLightModelView, 0,
-					Globals.mMatrixLightView, 0, cube.mMatrixModel, 0);
-			Matrix.multiplyMM(cube.mMatrixLightModelViewProj, 0,
-					Globals.mMatrixLightPerspective, 0,
-					cube.mMatrixLightModelView, 0);
-		}
-
-		Matrix.multiplyMM(mCube.mMatrixModelView, 0, Globals.mMatrixView, 0,
-				mCube.mMatrixModel, 0);
-		Matrix.multiplyMM(mCube.mMatrixModelViewProj, 0,
-				Globals.mMatrixPerspective, 0, mCube.mMatrixModelView, 0);
-
-		Matrix.multiplyMM(mCube.mMatrixLightModelView, 0,
-				Globals.mMatrixLightView, 0, mCube.mMatrixModel, 0);
-		Matrix.multiplyMM(mCube.mMatrixLightModelViewProj, 0,
-				Globals.mMatrixLightPerspective, 0,
-				mCube.mMatrixLightModelView, 0);
 	}
 
 	public void onMusicRepeat() {
@@ -275,20 +262,13 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	}
 
 	public void renderCombine() {
-		// Copy offscreen buffer to screen.
-		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-		GLES20.glViewport(0, 0, mWidth, mHeight);
-
-		GLES20.glClearColor(0.4f, 0.5f, 0.6f, 1.0f);
-		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-
 		// Render filled cube.
 		mShaderMain.useProgram();
 		int uModelM = mShaderMain.getHandle("uModelM");
-		int uModelViewM = mShaderMain.getHandle("uModelViewM");
-		int uModelViewProjM = mShaderMain.getHandle("uModelViewProjM");
-		int uLightModelViewProjM = mShaderMain
-				.getHandle("uLightModelViewProjM");
+		int uViewM = mShaderMain.getHandle("uViewM");
+		int uProjM = mShaderMain.getHandle("uProjM");
+		int uViewLightM = mShaderMain.getHandle("uViewLightM");
+		int uProjLightM = mShaderMain.getHandle("uProjLightM");
 		int uLightPos = mShaderMain.getHandle("uLightPos");
 		int aPosition = mShaderMain.getHandle("aPosition");
 		int aNormal = mShaderMain.getHandle("aNormal");
@@ -309,25 +289,21 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		GLES20.glEnable(GLES20.GL_CULL_FACE);
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
+		GLES20.glUniformMatrix4fv(uViewM, 1, false, Globals.mMatrixView, 0);
+		GLES20.glUniformMatrix4fv(uProjM, 1, false, Globals.mMatrixPerspective,
+				0);
+		GLES20.glUniformMatrix4fv(uViewLightM, 1, false,
+				Globals.mMatrixLightView, 0);
+		GLES20.glUniformMatrix4fv(uProjLightM, 1, false,
+				Globals.mMatrixLightPerspective, 0);
+
 		for (StructCube cube : mCubes) {
 			GLES20.glUniformMatrix4fv(uModelM, 1, false, cube.mMatrixModel, 0);
-			GLES20.glUniformMatrix4fv(uModelViewM, 1, false,
-					cube.mMatrixModelView, 0);
-			GLES20.glUniformMatrix4fv(uModelViewProjM, 1, false,
-					cube.mMatrixModelViewProj, 0);
-			GLES20.glUniformMatrix4fv(uLightModelViewProjM, 1, false,
-					cube.mMatrixLightModelViewProj, 0);
 
 			GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
 		}
 
 		GLES20.glUniformMatrix4fv(uModelM, 1, false, mCube.mMatrixModel, 0);
-		GLES20.glUniformMatrix4fv(uModelViewM, 1, false,
-				mCube.mMatrixModelView, 0);
-		GLES20.glUniformMatrix4fv(uModelViewProjM, 1, false,
-				mCube.mMatrixModelViewProj, 0);
-		GLES20.glUniformMatrix4fv(uLightModelViewProjM, 1, false,
-				mCube.mMatrixLightModelViewProj, 0);
 
 		GLES20.glVertexAttribPointer(aNormal, 3, GLES20.GL_BYTE, false, 0,
 				CubismCube.getNormalsInv());
@@ -339,20 +315,17 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	}
 
 	public void renderShadowMap() {
-		// GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-		// GLES20.glViewport(0, 0, mWidth, mHeight);
-
-		mFbo.bind();
-		mFbo.bindTexture(0);
-
-		GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-
 		// Render filled cube.
 		mShaderDepth.useProgram();
-		int uModelViewM = mShaderDepth.getHandle("uModelViewM");
-		int uModelViewProjM = mShaderDepth.getHandle("uModelViewProjM");
+
+		int uModelM = mShaderDepth.getHandle("uModelM");
+		int uViewM = mShaderDepth.getHandle("uViewM");
+		int uProjM = mShaderDepth.getHandle("uProjM");
 		int aPosition = mShaderDepth.getHandle("aPosition");
+
+		GLES20.glUniformMatrix4fv(uViewM, 1, false, Globals.mMatrixLightView, 0);
+		GLES20.glUniformMatrix4fv(uProjM, 1, false,
+				Globals.mMatrixLightPerspective, 0);
 
 		GLES20.glVertexAttribPointer(aPosition, 3, GLES20.GL_BYTE, false, 0,
 				CubismCube.getVertices());
@@ -362,18 +335,12 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
 		for (StructCube cube : mCubes) {
-			GLES20.glUniformMatrix4fv(uModelViewM, 1, false,
-					cube.mMatrixLightModelView, 0);
-			GLES20.glUniformMatrix4fv(uModelViewProjM, 1, false,
-					cube.mMatrixLightModelViewProj, 0);
+			GLES20.glUniformMatrix4fv(uModelM, 1, false, cube.mMatrixModel, 0);
 
 			GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
 		}
 
-		GLES20.glUniformMatrix4fv(uModelViewM, 1, false,
-				mCube.mMatrixLightModelView, 0);
-		GLES20.glUniformMatrix4fv(uModelViewProjM, 1, false,
-				mCube.mMatrixLightModelViewProj, 0);
+		GLES20.glUniformMatrix4fv(uModelM, 1, false, mCube.mMatrixModel, 0);
 
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
 

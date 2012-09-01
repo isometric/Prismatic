@@ -69,20 +69,33 @@ public class CubismCube {
 	}
 
 	private final float[] mMatrixModel = new float[16];
+	private final float[] mMatrixModelView = new float[16];
 	private final float[] mMatrixRotate = new float[16];
 	private final float[] mMatrixScale = new float[16];
 	private final float[] mMatrixTranslate = new float[16];
+	private final float[] mMatrixView = new float[16];
 
 	public CubismCube() {
 		Matrix.setIdentityM(mMatrixRotate, 0);
 		Matrix.setIdentityM(mMatrixScale, 0);
 		Matrix.setIdentityM(mMatrixTranslate, 0);
+		Matrix.setIdentityM(mMatrixModel, 0);
+	}
+
+	public void calculate() {
+		Matrix.multiplyMM(mMatrixModel, 0, mMatrixRotate, 0, mMatrixScale, 0);
+		Matrix.multiplyMM(mMatrixModel, 0, mMatrixTranslate, 0, mMatrixModel, 0);
+		Matrix.multiplyMM(mMatrixModelView, 0, mMatrixModel, 0, mMatrixView, 0);
 	}
 
 	public float[] getModelM() {
 		Matrix.multiplyMM(mMatrixModel, 0, mMatrixRotate, 0, mMatrixScale, 0);
 		Matrix.multiplyMM(mMatrixModel, 0, mMatrixTranslate, 0, mMatrixModel, 0);
 		return mMatrixModel;
+	}
+
+	public void setLookAt(float lx, float ly, float lz) {
+		Matrix.setLookAtM(mMatrixView, 0, lx, ly, lz, 0f, 0f, 0f, 0f, 1f, 0f);
 	}
 
 	public void setRotate(float rx, float ry, float rz) {
