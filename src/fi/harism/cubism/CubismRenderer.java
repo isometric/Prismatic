@@ -55,33 +55,36 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 				+ (size - 2) * (size - 2) * 2];
 		for (int x = 0; x < size; ++x) {
 			for (int y = 0; y < size; ++y) {
-				for (int z = 0; z < size; ++z) {
-					if (x == 0 || y == 0 || z == 0 || x == size - 1
-							|| y == size - 1 || z == size - 1) {
-						mCubes[idx] = new StructCube();
-						mCubes[idx].mCube.setScale(1f / (size - 1));
+				for (int z = 0; z < size;) {
+					mCubes[idx] = new StructCube();
+					mCubes[idx].mCube.setScale(1f / (size - 1));
 
-						float t = 2f / (size - 1);
-						float tx = x * t - 1;
-						float ty = y * t - 1;
-						float tz = z * t - 1;
+					float t = 2f / (size - 1);
+					float tx = x * t - 1;
+					float ty = y * t - 1;
+					float tz = z * t - 1;
 
-						mCubes[idx].mPositionSource[0] = tx;
-						mCubes[idx].mPositionSource[1] = ty;
-						mCubes[idx].mPositionSource[2] = tz;
+					mCubes[idx].mPositionSource[0] = tx;
+					mCubes[idx].mPositionSource[1] = ty;
+					mCubes[idx].mPositionSource[2] = tz;
 
-						mCubes[idx].mPositionTarget[0] = tx + tx
-								* (float) (3 * Math.random());
-						mCubes[idx].mPositionTarget[1] = ty + ty
-								* (float) (3 * Math.random());
-						mCubes[idx].mPositionTarget[2] = tz + tz
-								* (float) (3 * Math.random());
+					mCubes[idx].mPositionTarget[0] = tx + tx
+							* (float) (3 * Math.random());
+					mCubes[idx].mPositionTarget[1] = ty + ty
+							* (float) (3 * Math.random());
+					mCubes[idx].mPositionTarget[2] = tz + tz
+							* (float) (3 * Math.random());
 
-						mCubes[idx].mRotationTarget[0] = (float) (Math.random() * 720 - 360);
-						mCubes[idx].mRotationTarget[1] = (float) (Math.random() * 720 - 360);
-						mCubes[idx].mRotationTarget[2] = (float) (Math.random() * 720 - 360);
+					mCubes[idx].mRotationTarget[0] = (float) (Math.random() * 720 - 360);
+					mCubes[idx].mRotationTarget[1] = (float) (Math.random() * 720 - 360);
+					mCubes[idx].mRotationTarget[2] = (float) (Math.random() * 720 - 360);
 
-						++idx;
+					++idx;
+
+					if (x > 0 && y > 0 && x < size - 1 && y < size - 1) {
+						z += size - 1;
+					} else {
+						++z;
 					}
 				}
 			}
