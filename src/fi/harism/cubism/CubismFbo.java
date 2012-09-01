@@ -35,24 +35,18 @@ public final class CubismFbo {
 	private int mWidth, mHeight;
 
 	/**
-	 * Binds this FBO into use and adjusts viewport to FBO size.
-	 */
-	public void bind() {
-		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBufferHandle);
-		GLES20.glViewport(0, 0, mWidth, mHeight);
-	}
-
-	/**
-	 * Bind certain texture into target texture. This method should be called
-	 * only after call to bind().
+	 * Bind certain texture into target texture.
 	 * 
+	 * @param target
+	 *            GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP_POSITIVE/NEGATIVE_X/Y_Z.
 	 * @param index
 	 *            Index of texture to bind.
 	 */
-	public void bindTexture(int index) {
+	public void bindTexture(int target, int index) {
+		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBufferHandle);
+		GLES20.glViewport(0, 0, mWidth, mHeight);
 		GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER,
-				GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D,
-				mTextureHandles[index], 0);
+				GLES20.GL_COLOR_ATTACHMENT0, target, mTextureHandles[index], 0);
 	}
 
 	/**
@@ -85,8 +79,9 @@ public final class CubismFbo {
 	}
 
 	/**
-	 * Initializes FBO with given parameters. Calls simply init(int, int, int,
-	 * boolean, boolean) without render buffer generations.
+	 * Initializes FBO with given parameters. Calls simply init(int, int,
+	 * GLES20.GL_TEXTURE_2D, int, false, false) without stencil and depth buffer
+	 * generations.
 	 * 
 	 * @param width
 	 *            Width in pixels.
@@ -96,7 +91,7 @@ public final class CubismFbo {
 	 *            Number of textures to generate.
 	 */
 	public void init(int width, int height, int textureCount) {
-		init(width, height, textureCount, false, false);
+		init(width, height, GLES20.GL_TEXTURE_2D, textureCount, false, false);
 	}
 
 	/**
@@ -108,14 +103,16 @@ public final class CubismFbo {
 	 *            FBO width in pixels
 	 * @param height
 	 *            FBO height in pixels
+	 * @param target
+	 *            GL_TEXTURE_2D or GL_TEXTURE_CUBE_MAP
 	 * @param textureCount
 	 *            Number of textures to generate
 	 * @param genDepthBuffer
-	 *            If true, depth buffer is allocated for this FBO @ param
-	 *            genStencilBuffer If true, stencil buffer is allocated for this
-	 *            FBO
+	 *            If true, depth buffer is allocated for this FBO
+	 * @param genStencilBuffer
+	 *            If true, stencil buffer is allocated for this FBO
 	 */
-	public void init(int width, int height, int textureCount,
+	public void init(int width, int height, int target, int textureCount,
 			boolean genDepthBuffer, boolean genStencilBuffer) {
 
 		// Just in case.
@@ -135,18 +132,39 @@ public final class CubismFbo {
 		mTextureHandles = new int[textureCount];
 		GLES20.glGenTextures(textureCount, mTextureHandles, 0);
 		for (int texture : mTextureHandles) {
-			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture);
-			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D,
-					GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D,
-					GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
-			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D,
-					GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D,
-					GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-			GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA,
-					mWidth, mHeight, 0, GLES20.GL_RGBA,
-					GLES20.GL_UNSIGNED_BYTE, null);
+			GLES20.glBindTexture(target, texture);
+			GLES20.glTexParameteri(target, GLES20.GL_TEXTURE_WRAP_S,
+					GLES20.GL_CLAMP_TO_EDGE);
+			GLES20.glTexParameteri(target, GLES20.GL_TEXTURE_WRAP_T,
+					GLES20.GL_CLAMP_TO_EDGE);
+			GLES20.glTexParameteri(target, GLES20.GL_TEXTURE_MIN_FILTER,
+					GLES20.GL_NEAREST);
+			GLES20.glTexParameteri(target, GLES20.GL_TEXTURE_MAG_FILTER,
+					GLES20.GL_LINEAR);
+
+			if (target == GLES20.GL_TEXTURE_CUBE_MAP) {
+				GLES20.glTexImage2D(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0,
+						GLES20.GL_RGBA, mWidth, mHeight, 0, GLES20.GL_RGBA,
+						GLES20.GL_UNSIGNED_BYTE, null);
+				GLES20.glTexImage2D(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0,
+						GLES20.GL_RGBA, mWidth, mHeight, 0, GLES20.GL_RGBA,
+						GLES20.GL_UNSIGNED_BYTE, null);
+				GLES20.glTexImage2D(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0,
+						GLES20.GL_RGBA, mWidth, mHeight, 0, GLES20.GL_RGBA,
+						GLES20.GL_UNSIGNED_BYTE, null);
+				GLES20.glTexImage2D(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0,
+						GLES20.GL_RGBA, mWidth, mHeight, 0, GLES20.GL_RGBA,
+						GLES20.GL_UNSIGNED_BYTE, null);
+				GLES20.glTexImage2D(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0,
+						GLES20.GL_RGBA, mWidth, mHeight, 0, GLES20.GL_RGBA,
+						GLES20.GL_UNSIGNED_BYTE, null);
+				GLES20.glTexImage2D(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0,
+						GLES20.GL_RGBA, mWidth, mHeight, 0, GLES20.GL_RGBA,
+						GLES20.GL_UNSIGNED_BYTE, null);
+			} else {
+				GLES20.glTexImage2D(target, 0, GLES20.GL_RGBA, mWidth, mHeight,
+						0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
+			}
 		}
 
 		// Generate depth buffer.

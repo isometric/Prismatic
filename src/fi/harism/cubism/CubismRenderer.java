@@ -114,12 +114,49 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 
 	@Override
 	public void onDrawFrame(GL10 unused) {
-		// Render shadow map.
-		mFbo.bind();
-		mFbo.bindTexture(0);
-		GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		final float[] viewRotationM = new float[16];
+
+		// Render shadow map forward.
+		mFbo.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0);
+		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-		renderShadowMap();
+		Matrix.setIdentityM(viewRotationM, 0);
+		renderShadowMap(viewRotationM);
+
+		// Render shadow map left.
+		mFbo.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0);
+		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		CubismMatrix.setRotateM(viewRotationM, 0f, -90f, 0f);
+		renderShadowMap(viewRotationM);
+
+		// Render shadow map back.
+		mFbo.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0);
+		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		CubismMatrix.setRotateM(viewRotationM, 0f, 180f, 0f);
+		renderShadowMap(viewRotationM);
+
+		// Render shadow map right.
+		mFbo.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0);
+		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		CubismMatrix.setRotateM(viewRotationM, 0f, 90f, 0f);
+		renderShadowMap(viewRotationM);
+
+		// Render shadow map up.
+		mFbo.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0);
+		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		CubismMatrix.setRotateM(viewRotationM, -90f, 0f, 180f);
+		renderShadowMap(viewRotationM);
+
+		// Render shadow map down.
+		mFbo.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0);
+		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		CubismMatrix.setRotateM(viewRotationM, 90f, 0f, 180f);
+		renderShadowMap(viewRotationM);
 
 		// Copy offscreen buffer to screen.
 		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
@@ -134,7 +171,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	public void onGLEvent() {
 		// Global rotation values.
 		long time = SystemClock.uptimeMillis();
-		if (mAnimationStart == 0 || time - mAnimationStart > 5900) {
+		if (mAnimationStart == 0) {
 			for (int i = 0; i < 3; ++i) {
 				Globals.mCameraPosSource[i] = (float) (Math.random() * 6 - 3);
 				Globals.mCameraPosSource[i] += Globals.mCameraPosSource[i] > 0 ? 3
@@ -143,11 +180,18 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 				Globals.mCameraPosTarget[i] += Globals.mCameraPosTarget[i] > 0 ? 3
 						: -3;
 
-				Globals.mLightPosSource[i] = Globals.mCameraPosSource[i] * 1.2f;
-				Globals.mLightPosTarget[i] = Globals.mCameraPosTarget[i] * 1.2f;
+				Globals.mLightPosSource[i] = (float) (Math.random() * 6 - 3);
+				Globals.mLightPosSource[i] += Globals.mLightPosSource[i] > 0 ? 3
+						: -3;
+				Globals.mLightPosTarget[i] = (float) (Math.random() * 6 - 3);
+				Globals.mLightPosTarget[i] += Globals.mLightPosTarget[i] > 0 ? 3
+						: -3;
+
+				Globals.mLightPosSource[i] = Globals.mCameraPosSource[i]
+						* (float) (.5 + Math.random());
+				Globals.mLightPosTarget[i] = Globals.mCameraPosTarget[i]
+						* (float) (.5 + Math.random());
 			}
-			Globals.mLightPosSource[1] += 1;
-			Globals.mLightPosTarget[1] += 1;
 
 			final double sortX = Math.random() * 10 - 5;
 			final double sortY = Math.random() * 10 - 5;
@@ -181,19 +225,23 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 				Globals.mCameraPos[1], Globals.mCameraPos[2], 0f, 0f, 0f, 0f,
 				1f, 0f);
 		Matrix.setLookAtM(Globals.mMatrixLightView, 0, Globals.mLightPos[0],
-				Globals.mLightPos[1], Globals.mLightPos[2], 0f, 0f, 0f, 0f, 1f,
-				0f);
+				Globals.mLightPos[1], Globals.mLightPos[2],
+				Globals.mCameraPos[0], Globals.mCameraPos[1],
+				Globals.mCameraPos[2], 0f, 1f, 0f);
+		Matrix.setIdentityM(Globals.mMatrixLightView, 0);
+		Matrix.translateM(Globals.mMatrixLightView, 0, -Globals.mLightPos[0],
+				-Globals.mLightPos[1], -Globals.mLightPos[2]);
 
-		float rx = ((time % 20000) / 20000f) * 360f;
-		float ry = ((time % 22000) / 22000f) * 360f;
-		float rz = ((time % 25000) / 25000f) * 360f;
+		float rx = ((time % 40000) / 40000f) * 360f;
+		float ry = ((time % 42000) / 42000f) * 360f;
+		float rz = ((time % 45000) / 45000f) * 360f;
 
 		final float[] rotateM = new float[16];
 		CubismMatrix.setRotateM(rotateM, rx, ry, rz);
 
 		for (int i = 0; i < mCubes.length; ++i) {
 			float tt = 1f - (float) i / mCubes.length;
-			tt = 2 * ((t * t * (3 - 2 * t)) - 0.1f) * (tt * tt * (3 - 2 * tt));
+			tt = 3 * ((t * t * (3 - 2 * t)) - 0.1f) * (tt * tt * (3 - 2 * tt));
 			if (tt < 0) {
 				tt = 0;
 			} else if (tt > 1) {
@@ -229,11 +277,11 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 
 		float aspectR = (float) mWidth / mHeight;
 		CubismMatrix.setPerspectiveM(Globals.mMatrixPerspective, 45f, aspectR,
-				.1f, 20f);
-		CubismMatrix.setPerspectiveM(Globals.mMatrixLightPerspective, 45f, 1f,
-				.1f, 20f);
+				.1f, 40f);
+		CubismMatrix.setPerspectiveM(Globals.mMatrixLightPerspective, 90f, 1f,
+				.1f, 40f);
 
-		mFbo.init(512, 512, 1, true, false);
+		mFbo.init(512, 512, GLES20.GL_TEXTURE_CUBE_MAP, 1, true, false);
 	}
 
 	@Override
@@ -273,6 +321,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		int uViewLightM = mShaderMain.getHandle("uViewLightM");
 		int uProjLightM = mShaderMain.getHandle("uProjLightM");
 		int uLightPos = mShaderMain.getHandle("uLightPos");
+		int uColor = mShaderMain.getHandle("uColor");
 		int aPosition = mShaderMain.getHandle("aPosition");
 		int aNormal = mShaderMain.getHandle("aNormal");
 
@@ -287,7 +336,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		GLES20.glEnableVertexAttribArray(aNormal);
 
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFbo.getTexture(0));
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_CUBE_MAP, mFbo.getTexture(0));
 
 		GLES20.glEnable(GLES20.GL_CULL_FACE);
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
@@ -300,6 +349,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		GLES20.glUniformMatrix4fv(uProjLightM, 1, false,
 				Globals.mMatrixLightPerspective, 0);
 
+		GLES20.glUniform3f(uColor, .4f, .6f, 1f);
 		for (StructCube cube : mCubes) {
 			GLES20.glUniformMatrix4fv(uModelM, 1, false, cube.mMatrixModel, 0);
 
@@ -307,6 +357,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		}
 
 		GLES20.glUniformMatrix4fv(uModelM, 1, false, mCube.mMatrixModel, 0);
+		GLES20.glUniform3f(uColor, .6f, .6f, .6f);
 
 		GLES20.glVertexAttribPointer(aNormal, 3, GLES20.GL_BYTE, false, 0,
 				CubismCube.getNormalsInv());
@@ -317,18 +368,20 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		GLES20.glDisable(GLES20.GL_CULL_FACE);
 	}
 
-	public void renderShadowMap() {
+	public void renderShadowMap(float[] viewRotateM) {
 		// Render filled cube.
 		mShaderDepth.useProgram();
 
 		int uModelM = mShaderDepth.getHandle("uModelM");
 		int uViewM = mShaderDepth.getHandle("uViewM");
 		int uProjM = mShaderDepth.getHandle("uProjM");
+		int uViewRotateM = mShaderDepth.getHandle("uViewRotateM");
 		int aPosition = mShaderDepth.getHandle("aPosition");
 
 		GLES20.glUniformMatrix4fv(uViewM, 1, false, Globals.mMatrixLightView, 0);
 		GLES20.glUniformMatrix4fv(uProjM, 1, false,
 				Globals.mMatrixLightPerspective, 0);
+		GLES20.glUniformMatrix4fv(uViewRotateM, 1, false, viewRotateM, 0);
 
 		GLES20.glVertexAttribPointer(aPosition, 3, GLES20.GL_BYTE, false, 0,
 				CubismCube.getVertices());

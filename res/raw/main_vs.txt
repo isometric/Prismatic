@@ -11,7 +11,6 @@ attribute vec3 aNormal;
 
 varying vec4 vPositionModel;
 varying vec4 vPositionView;
-varying vec4 vPositionLight;
 varying vec3 vNormal;
 
 const mat4 scaleMatrix = mat4(0.5, 0.0, 0.0, 0.0,
@@ -22,7 +21,6 @@ const mat4 scaleMatrix = mat4(0.5, 0.0, 0.0, 0.0,
 void main() {
 	vPositionModel = uModelM * vec4(aPosition, 1.0);
 	vPositionView = uViewM * vPositionModel;
-	vPositionLight = scaleMatrix * uProjLightM * uViewLightM * vPositionModel;
 	vNormal = mat3(uModelM) * aNormal;
 	gl_Position = uProjM * vPositionView;
 }
