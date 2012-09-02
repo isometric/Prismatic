@@ -127,9 +127,17 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		return baos.toString();
 	}
 
+	/**
+	 * Calculates scene animation.
+	 */
 	private synchronized void onAnimateScene() {
 		long time = SystemClock.uptimeMillis();
-		float t = 0f;
+		long timeDiff = time - mAnimationStart;
+
+		/**
+		 * Camera and light movement.
+		 */
+		float tCamera = 0f;
 		switch (mAnimationStep) {
 		case 0: {
 			for (int i = 0; i < 3; ++i) {
@@ -174,8 +182,9 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 			break;
 		}
 		case 2: {
-			if (time - mAnimationStart < 7700) {
-				t = (time - mAnimationStart) / 11200f;
+			if (timeDiff < 7600) {
+				tCamera = timeDiff / 7600f;
+				tCamera = tCamera * tCamera * (3 - 2 * tCamera);
 				break;
 			}
 
@@ -196,31 +205,16 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 			mAnimationStep = 3;
 		}
 		case 3: {
-			if (time - mAnimationStart < 9500) {
-				t = (time - mAnimationStart) / 11200f;
-				break;
-			}
-
-			for (int i = 0; i < 3; ++i) {
-				Globals.mCameraPosSource[i] = Globals.mCameraPos[i];
-				Globals.mCameraPosTarget[i] = Globals.mCameraPos[i];
-				Globals.mLightPosSource[i] = Globals.mLightPos[i];
-				Globals.mLightPosTarget[i] = Globals.mLightPos[i];
-			}
-
-			mAnimationStep = 4;
+			tCamera = (timeDiff - 7600) / (11200f - 7600f);
+			tCamera = tCamera * tCamera * (3 - 2 * tCamera);
+			break;
 		}
-		case 4:
-			t = 1f - (time - mAnimationStart - 9500) / 1720f;
-			if (t < 0) {
-				t = 0;
-			}
 		}
 
 		interpolateV(Globals.mCameraPos, Globals.mCameraPosSource,
-				Globals.mCameraPosTarget, t);
+				Globals.mCameraPosTarget, tCamera);
 		interpolateV(Globals.mLightPos, Globals.mLightPosSource,
-				Globals.mLightPosTarget, t);
+				Globals.mLightPosTarget, tCamera);
 
 		Matrix.setLookAtM(Globals.mMatrixView, 0, Globals.mCameraPos[0],
 				Globals.mCameraPos[1], Globals.mCameraPos[2], 0f, 0f, 0f, 0f,
@@ -229,31 +223,34 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		Matrix.translateM(Globals.mMatrixLightView, 0, -Globals.mLightPos[0],
 				-Globals.mLightPos[1], -Globals.mLightPos[2]);
 
-		float rx = ((time % 40000) / 40000f) * 360f;
-		float ry = ((time % 42000) / 42000f) * 360f;
-		float rz = ((time % 45000) / 45000f) * 360f;
-
-		final float[] rotateM = new float[16];
-		CubismMatrix.setRotateM(rotateM, rx, ry, rz);
+		/**
+		 * Big cube "explosion".
+		 */
+		float tExplode = 0f;
+		if (timeDiff > 2000 && timeDiff <= 9000) {
+			tExplode = (timeDiff - 2000) / 7000f;
+		} else if (timeDiff > 9000) {
+			tExplode = 1f - (timeDiff - 9000) / 2200f;
+		}
+		if (tExplode > 1)
+			tExplode = 1;
+		if (tExplode < 0)
+			tExplode = 0;
 
 		for (int i = 0; i < mCubes.length; ++i) {
-			float tt = 1f - (float) i / mCubes.length;
-			tt = 2 * ((t * t * (3 - 2 * t)) - 0.1f) * (tt * tt * (3 - 2 * tt));
-			if (tt < 0) {
-				tt = 0;
-			} else if (tt > 1) {
-				tt = 1;
-			}
+			float t = 1f - (float) i / mCubes.length;
+			t = tExplode * t;
+			t = t * t * (3 - 2 * t);
 
 			StructCube structCube = mCubes[i];
 
 			interpolateV(structCube.mPosition, structCube.mPositionSource,
-					structCube.mPositionTarget, tt);
+					structCube.mPositionTarget, t);
 			structCube.mCube.setTranslate(structCube.mPosition[0],
 					structCube.mPosition[1], structCube.mPosition[2]);
 
 			interpolateV(structCube.mRotation, structCube.mRotationSource,
-					structCube.mRotationTarget, tt);
+					structCube.mRotationTarget, t);
 			structCube.mCube.setRotate(structCube.mRotation[0],
 					structCube.mRotation[1], structCube.mRotation[2]);
 		}
@@ -331,7 +328,6 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	}
 
 	public void onMusicRepeat() {
-		mAnimationStart = 0;
 		mAnimationStep = 1;
 	}
 
