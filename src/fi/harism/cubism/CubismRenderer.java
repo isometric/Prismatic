@@ -362,6 +362,8 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		double incrementalGaussian3 = incrementalGaussian2
 				* incrementalGaussian2;
 
+		GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+
 		/**
 		 * First pass, blur texture horizontally.
 		 */
