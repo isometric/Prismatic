@@ -18,6 +18,7 @@ package fi.harism.cubism;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -37,9 +38,15 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 
 	private CubismActivity mActivity;
 	private long mAnimationStart;
+	private ByteBuffer mBufferQuad;
 	private final StructCube mCube = new StructCube();
 	private final StructCube[] mCubes;
-	private CubismFbo mFbo = new CubismFbo();
+	private final CubismFbo mFboBloom = new CubismFbo();
+	private final CubismFbo mFboMain = new CubismFbo();
+	private final CubismFbo mFboShadowMap = new CubismFbo();
+	private final CubismShader mShaderBloom1 = new CubismShader();
+	private final CubismShader mShaderBloom2 = new CubismShader();
+	private final CubismShader mShaderBloom3 = new CubismShader();
 	private final boolean[] mShaderCompilerSupport = new boolean[1];
 	private final CubismShader mShaderDepth = new CubismShader();
 	private final CubismShader mShaderMain = new CubismShader();
@@ -47,6 +54,11 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 
 	public CubismRenderer(CubismActivity activity) {
 		mActivity = activity;
+
+		// Create full scene quad buffer.
+		final byte FULL_QUAD_COORDS[] = { -1, 1, -1, -1, 1, 1, 1, -1 };
+		mBufferQuad = ByteBuffer.allocateDirect(4 * 2);
+		mBufferQuad.put(FULL_QUAD_COORDS).position(0);
 
 		mCube.mCube.setScale(-6f);
 
@@ -118,53 +130,56 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		final float[] viewRotationM = new float[16];
 
 		// Render shadow map forward.
-		mFbo.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0);
+		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0);
 		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 		Matrix.setIdentityM(viewRotationM, 0);
 		renderShadowMap(viewRotationM);
 
 		// Render shadow map left.
-		mFbo.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0);
+		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0);
 		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 		CubismMatrix.setRotateM(viewRotationM, 0f, -90f, 0f);
 		renderShadowMap(viewRotationM);
 
 		// Render shadow map back.
-		mFbo.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0);
+		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0);
 		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 		CubismMatrix.setRotateM(viewRotationM, 0f, 180f, 0f);
 		renderShadowMap(viewRotationM);
 
 		// Render shadow map right.
-		mFbo.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0);
+		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0);
 		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 		CubismMatrix.setRotateM(viewRotationM, 0f, 90f, 0f);
 		renderShadowMap(viewRotationM);
 
 		// Render shadow map up.
-		mFbo.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0);
+		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0);
 		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 		CubismMatrix.setRotateM(viewRotationM, -90f, 0f, 180f);
 		renderShadowMap(viewRotationM);
 
 		// Render shadow map down.
-		mFbo.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0);
+		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0);
 		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 		CubismMatrix.setRotateM(viewRotationM, 90f, 0f, 180f);
 		renderShadowMap(viewRotationM);
 
-		// Copy offscreen buffer to screen.
-		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-		GLES20.glViewport(0, 0, mWidth, mHeight);
-		GLES20.glClearColor(0.4f, 0.5f, 0.6f, 1.0f);
+		// Render final scene.
+		// GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+		// GLES20.glViewport(0, 0, mWidth, mHeight);
+		mFboMain.bindTexture(GLES20.GL_TEXTURE_2D, 0);
+		GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 		renderCombine();
+
+		renderBloom();
 
 		mActivity.queueGLEvent();
 	}
@@ -282,7 +297,10 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		CubismMatrix.setPerspectiveM(Globals.mMatrixLightPerspective, 90f, 1f,
 				.1f, 40f);
 
-		mFbo.init(512, 512, GLES20.GL_TEXTURE_CUBE_MAP, 1, true, false);
+		mFboShadowMap
+				.init(512, 512, GLES20.GL_TEXTURE_CUBE_MAP, 1, true, false);
+		mFboBloom.init(mWidth / 4, mHeight / 4, 2);
+		mFboMain.init(mWidth, mHeight, GLES20.GL_TEXTURE_2D, 1, true, false);
 	}
 
 	@Override
@@ -307,10 +325,108 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 			vertexSource = loadRawString(R.raw.depth_vs);
 			fragmentSource = loadRawString(R.raw.depth_fs);
 			mShaderDepth.setProgram(vertexSource, fragmentSource);
+			vertexSource = loadRawString(R.raw.bloom_vs);
+			fragmentSource = loadRawString(R.raw.bloom_pass1_fs);
+			mShaderBloom1.setProgram(vertexSource, fragmentSource);
+			vertexSource = loadRawString(R.raw.bloom_vs);
+			fragmentSource = loadRawString(R.raw.bloom_pass2_fs);
+			mShaderBloom2.setProgram(vertexSource, fragmentSource);
+			vertexSource = loadRawString(R.raw.bloom_vs);
+			fragmentSource = loadRawString(R.raw.bloom_pass3_fs);
+			mShaderBloom3.setProgram(vertexSource, fragmentSource);
 		} catch (Exception ex) {
 			showError(ex.getMessage());
 		}
 
+	}
+
+	private void renderBloom() {
+		/**
+		 * Instantiate variables for bloom filter.
+		 */
+
+		// Pixel sizes.
+		float blurSizeH = 1f / mFboBloom.getWidth();
+		float blurSizeV = 1f / mFboBloom.getHeight();
+
+		// Calculate number of pixels from relative size.
+		int numBlurPixelsPerSide = (int) (0.05f * Math.min(
+				mFboBloom.getWidth(), mFboBloom.getHeight()));
+		if (numBlurPixelsPerSide < 1)
+			numBlurPixelsPerSide = 1;
+		double sigma = 1.0 + numBlurPixelsPerSide * 0.5;
+
+		// Values needed for incremental gaussian blur.
+		double incrementalGaussian1 = 1.0 / (Math.sqrt(2.0 * Math.PI) * sigma);
+		double incrementalGaussian2 = Math.exp(-0.5 / (sigma * sigma));
+		double incrementalGaussian3 = incrementalGaussian2
+				* incrementalGaussian2;
+
+		/**
+		 * First pass, blur texture horizontally.
+		 */
+
+		mFboBloom.bindTexture(GLES20.GL_TEXTURE_2D, 0);
+		mShaderBloom1.useProgram();
+
+		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFboMain.getTexture(0));
+		GLES20.glUniform3f(mShaderBloom1.getHandle("uIncrementalGaussian"),
+				(float) incrementalGaussian1, (float) incrementalGaussian2,
+				(float) incrementalGaussian3);
+		GLES20.glUniform1f(mShaderBloom1.getHandle("uNumBlurPixelsPerSide"),
+				numBlurPixelsPerSide);
+		GLES20.glUniform2f(mShaderBloom1.getHandle("uBlurOffset"), blurSizeH,
+				0f);
+
+		GLES20.glVertexAttribPointer(mShaderBloom1.getHandle("aPosition"), 2,
+				GLES20.GL_BYTE, false, 0, mBufferQuad);
+		GLES20.glEnableVertexAttribArray(mShaderBloom1.getHandle("aPosition"));
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+
+		/**
+		 * Second pass, blur texture vertically.
+		 */
+		mFboBloom.bindTexture(GLES20.GL_TEXTURE_2D, 1);
+		mShaderBloom2.useProgram();
+
+		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFboBloom.getTexture(0));
+		GLES20.glUniform3f(mShaderBloom2.getHandle("uIncrementalGaussian"),
+				(float) incrementalGaussian1, (float) incrementalGaussian2,
+				(float) incrementalGaussian3);
+		GLES20.glUniform1f(mShaderBloom2.getHandle("uNumBlurPixelsPerSide"),
+				numBlurPixelsPerSide);
+		GLES20.glUniform2f(mShaderBloom2.getHandle("uBlurOffset"), 0f,
+				blurSizeV);
+
+		GLES20.glVertexAttribPointer(mShaderBloom2.getHandle("aPosition"), 2,
+				GLES20.GL_BYTE, false, 0, mBufferQuad);
+		GLES20.glEnableVertexAttribArray(mShaderBloom2.getHandle("aPosition"));
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+
+		/**
+		 * Third pass, combine source texture and calculated bloom texture into
+		 * output texture.
+		 */
+		// fbo.bind();
+		// fbo.bindTexture(0);
+		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+		GLES20.glViewport(0, 0, mWidth, mHeight);
+
+		mShaderBloom3.useProgram();
+
+		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFboBloom.getTexture(1));
+		GLES20.glUniform1i(mShaderBloom3.getHandle("sTextureBloom"), 0);
+		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFboMain.getTexture(0));
+		GLES20.glUniform1i(mShaderBloom3.getHandle("sTextureSource"), 1);
+
+		GLES20.glVertexAttribPointer(mShaderBloom3.getHandle("aPosition"), 2,
+				GLES20.GL_BYTE, false, 0, mBufferQuad);
+		GLES20.glEnableVertexAttribArray(mShaderBloom3.getHandle("aPosition"));
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 	}
 
 	public void renderCombine() {
@@ -335,7 +451,8 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		GLES20.glEnableVertexAttribArray(aNormal);
 
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_CUBE_MAP, mFbo.getTexture(0));
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_CUBE_MAP,
+				mFboShadowMap.getTexture(0));
 
 		GLES20.glEnable(GLES20.GL_CULL_FACE);
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);

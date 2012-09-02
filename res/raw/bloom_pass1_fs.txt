@@ -1,0 +1,35 @@
+
+precision mediump float;
+
+uniform sampler2D sTextureSource;
+uniform vec3 uIncrementalGaussian;
+uniform vec2 uBlurOffset;
+uniform float uNumBlurPixelsPerSide;
+varying vec2 vTextureCoord;
+
+vec4 tex(vec2 pos) {
+	const float threshold = 0.6;
+	const float div = 1.0 / (1.0 - threshold);
+	vec4 color = texture2D(sTextureSource, pos);
+	return (color - threshold) * div;
+}
+
+void main() {
+	vec3 incrementalGaussian = uIncrementalGaussian;			
+	
+	gl_FragColor = tex(vTextureCoord) * incrementalGaussian.x;
+	float coefficientSum = incrementalGaussian.x;
+	incrementalGaussian.xy *= incrementalGaussian.yz;
+
+	vec2 blurOffset = uBlurOffset;
+
+	for (float i = 1.0; i <= uNumBlurPixelsPerSide; i++) {
+		gl_FragColor += tex(vTextureCoord - blurOffset) * incrementalGaussian.x;
+		gl_FragColor += tex(vTextureCoord + blurOffset) * incrementalGaussian.x;
+		coefficientSum += 2.0 * incrementalGaussian.x;
+		incrementalGaussian.xy *= incrementalGaussian.yz;
+		blurOffset += uBlurOffset;
+	}
+	
+	gl_FragColor /= coefficientSum;
+}
