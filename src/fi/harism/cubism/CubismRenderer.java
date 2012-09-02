@@ -38,6 +38,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 
 	private CubismActivity mActivity;
 	private long mAnimationStart;
+	private int mAnimationStep;
 	private ByteBuffer mBufferQuad;
 	private final StructCube mCube = new StructCube();
 	private final StructCube[] mCubes;
@@ -187,24 +188,25 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	public void onGLEvent() {
 		// Global rotation values.
 		long time = SystemClock.uptimeMillis();
-		if (mAnimationStart == 0) {
+		float t = 0f;
+		switch (mAnimationStep) {
+		case 0: {
 			for (int i = 0; i < 3; ++i) {
-				Globals.mCameraPosSource[i] = (float) (Math.random() * 6 - 3);
-				Globals.mCameraPosSource[i] += Globals.mCameraPosSource[i] > 0 ? 3
+				Globals.mCameraPosTarget[i] = (float) (Math.random() * 6 - 3);
+				Globals.mCameraPosTarget[i] += Globals.mCameraPosTarget[i] > 0 ? 3
 						: -3;
+				Globals.mLightPosTarget[i] = Globals.mCameraPosTarget[i]
+						* (float) (.5 + Math.random());
+			}
+		}
+		case 1: {
+			for (int i = 0; i < 3; ++i) {
+				Globals.mCameraPosSource[i] = Globals.mCameraPosTarget[i];
 				Globals.mCameraPosTarget[i] = (float) (Math.random() * 6 - 3);
 				Globals.mCameraPosTarget[i] += Globals.mCameraPosTarget[i] > 0 ? 3
 						: -3;
 
-				Globals.mLightPosSource[i] = (float) (Math.random() * 6 - 3);
-				Globals.mLightPosSource[i] += Globals.mLightPosSource[i] > 0 ? 3
-						: -3;
-				Globals.mLightPosTarget[i] = (float) (Math.random() * 6 - 3);
-				Globals.mLightPosTarget[i] += Globals.mLightPosTarget[i] > 0 ? 3
-						: -3;
-
-				Globals.mLightPosSource[i] = Globals.mCameraPosSource[i]
-						* (float) (.5 + Math.random());
+				Globals.mLightPosSource[i] = Globals.mLightPosTarget[i];
 				Globals.mLightPosTarget[i] = Globals.mCameraPosTarget[i]
 						* (float) (.5 + Math.random());
 			}
@@ -226,11 +228,53 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 					return dist0 < dist1 ? -1 : 1;
 				}
 			});
-
 			mAnimationStart = time;
+			mAnimationStep = 2;
+			break;
 		}
+		case 2: {
+			if (time - mAnimationStart < 7700) {
+				t = (time - mAnimationStart) / 11200f;
+				break;
+			}
 
-		float t = (time - mAnimationStart) / 11200f;
+			for (int i = 0; i < 3; ++i) {
+				Globals.mCameraPosSource[i] = (float) (Math.random() * 6 - 3);
+				Globals.mCameraPosSource[i] += Globals.mCameraPosSource[i] > 0 ? 3
+						: -3;
+				Globals.mCameraPosTarget[i] = (float) (Math.random() * 6 - 3);
+				Globals.mCameraPosTarget[i] += Globals.mCameraPosTarget[i] > 0 ? 3
+						: -3;
+
+				Globals.mLightPosSource[i] = Globals.mCameraPosSource[i]
+						* (float) (.5 + Math.random());
+				Globals.mLightPosTarget[i] = Globals.mCameraPosTarget[i]
+						* (float) (.5 + Math.random());
+			}
+
+			mAnimationStep = 3;
+		}
+		case 3: {
+			if (time - mAnimationStart < 9500) {
+				t = (time - mAnimationStart) / 11200f;
+				break;
+			}
+
+			for (int i = 0; i < 3; ++i) {
+				Globals.mCameraPosSource[i] = Globals.mCameraPos[i];
+				Globals.mCameraPosTarget[i] = Globals.mCameraPos[i];
+				Globals.mLightPosSource[i] = Globals.mLightPos[i];
+				Globals.mLightPosTarget[i] = Globals.mLightPos[i];
+			}
+
+			mAnimationStep = 4;
+		}
+		case 4:
+			t = 1f - (time - mAnimationStart - 9500) / 1720f;
+			if (t < 0) {
+				t = 0;
+			}
+		}
 
 		interpolateV(Globals.mCameraPos, Globals.mCameraPosSource,
 				Globals.mCameraPosTarget, t);
@@ -284,6 +328,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 
 	public void onMusicRepeat() {
 		mAnimationStart = 0;
+		mAnimationStep = 1;
 	}
 
 	@Override
