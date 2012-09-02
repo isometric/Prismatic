@@ -71,6 +71,7 @@ public class CubismActivity extends Activity {
 	public void onPause() {
 		super.onPause();
 		mGLSurfaceView.onPause();
+		mRenderer.onPause();
 		mMediaPlayer.stop();
 	}
 
@@ -78,6 +79,7 @@ public class CubismActivity extends Activity {
 	public void onResume() {
 		super.onResume();
 		mGLSurfaceView.onResume();
+		mRenderer.onResume();
 		mMediaPlayer.setVolume(0, 0);
 		new FadeInTimer(2000, 100).start();
 		mMediaPlayer.start();

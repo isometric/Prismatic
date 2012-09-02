@@ -25,6 +25,7 @@ import java.util.Comparator;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -36,10 +37,11 @@ import android.widget.Toast;
 
 public class CubismRenderer implements GLSurfaceView.Renderer {
 
-	private CubismActivity mActivity;
+	private final AnimationRunnable mAnimationRunnable = new AnimationRunnable();
 	private long mAnimationStart;
 	private int mAnimationStep;
 	private ByteBuffer mBufferQuad;
+	private Context mContext;
 	private final StructCube[] mCubes;
 	private final CubismCube mCubeSkybox = new CubismCube();
 	private final CubismFbo mFboBloom = new CubismFbo();
@@ -53,8 +55,8 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	private final CubismShader mShaderMain = new CubismShader();
 	private int mWidth, mHeight;
 
-	public CubismRenderer(CubismActivity activity) {
-		mActivity = activity;
+	public CubismRenderer(Context context) {
+		mContext = context;
 
 		// Create full scene quad buffer.
 		final byte FULL_QUAD_COORDS[] = { -1, 1, -1, -1, 1, 1, 1, -1 };
@@ -103,7 +105,6 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 				}
 			}
 		}
-
 	}
 
 	private void interpolateV(float[] out, float[] src, float[] dst, float t) {
@@ -116,7 +117,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	 * Loads String from raw resources with given id.
 	 */
 	private String loadRawString(int rawId) throws Exception {
-		InputStream is = mActivity.getResources().openRawResource(rawId);
+		InputStream is = mContext.getResources().openRawResource(rawId);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		byte[] buf = new byte[1024];
 		int len;
@@ -126,7 +127,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		return baos.toString();
 	}
 
-	private void onAnimateScene() {
+	private synchronized void onAnimateScene() {
 		long time = SystemClock.uptimeMillis();
 		float t = 0f;
 		switch (mAnimationStep) {
@@ -259,8 +260,8 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	}
 
 	@Override
-	public void onDrawFrame(GL10 unused) {
-		onAnimateScene();
+	public synchronized void onDrawFrame(GL10 unused) {
+		// onAnimateScene();
 
 		final float[] viewRotationM = new float[16];
 
@@ -323,11 +324,29 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 					| GLES20.GL_DEPTH_BUFFER_BIT);
 			renderCombine();
 		}
+
+		synchronized (mAnimationRunnable.mLock) {
+			mAnimationRunnable.mLock.notifyAll();
+		}
 	}
 
 	public void onMusicRepeat() {
 		mAnimationStart = 0;
 		mAnimationStep = 1;
+	}
+
+	public void onPause() {
+		mAnimationRunnable.mStop = true;
+		synchronized (mAnimationRunnable.mLock) {
+			mAnimationRunnable.mLock.notifyAll();
+		}
+	}
+
+	public void onResume() {
+		mAnimationRunnable.mStop = false;
+		Thread t = new Thread(mAnimationRunnable);
+		t.setPriority(Thread.MAX_PRIORITY);
+		t.start();
 	}
 
 	@Override
@@ -355,7 +374,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 
 		// If not, show user an error message and return immediately.
 		if (mShaderCompilerSupport[0] == false) {
-			String msg = mActivity.getString(R.string.error_shader_compiler);
+			String msg = mContext.getString(R.string.error_shader_compiler);
 			showError(msg);
 			return;
 		}
@@ -599,9 +618,30 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		new Handler(Looper.getMainLooper()).post(new Runnable() {
 			@Override
 			public void run() {
-				Toast.makeText(mActivity, errorMsg, Toast.LENGTH_LONG).show();
+				Toast.makeText(mContext, errorMsg, Toast.LENGTH_LONG).show();
 			}
 		});
+	}
+
+	private class AnimationRunnable implements Runnable {
+
+		private Object mLock = new Object();
+		private boolean mStop;
+
+		@Override
+		public void run() {
+			while (!mStop) {
+				onAnimateScene();
+				synchronized (mLock) {
+					try {
+						mLock.wait();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+
 	}
 
 	private static class Globals {
