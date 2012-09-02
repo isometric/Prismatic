@@ -26,7 +26,6 @@ import android.view.Window;
 
 public class CubismActivity extends Activity {
 
-	private GLQueueRunnable mGLQueueRunnable = new GLQueueRunnable();
 	private GLSurfaceView mGLSurfaceView;
 	private MediaPlayer mMediaPlayer;
 	private CubismRenderer mRenderer;
@@ -48,7 +47,6 @@ public class CubismActivity extends Activity {
 		mGLSurfaceView.setRenderer(mRenderer);
 		mGLSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 		setContentView(mGLSurfaceView);
-		queueGLEvent();
 
 		// Create media player object.
 		mMediaPlayer = MediaPlayer.create(this, R.raw.loop);
@@ -86,13 +84,6 @@ public class CubismActivity extends Activity {
 	}
 
 	/**
-	 * Triggers runnable in rendering thread to be spawned.
-	 */
-	public void queueGLEvent() {
-		mGLSurfaceView.queueEvent(mGLQueueRunnable);
-	}
-
-	/**
 	 * Private timer for fading in the music.
 	 */
 	private class FadeInTimer extends CountDownTimer {
@@ -116,17 +107,6 @@ public class CubismActivity extends Activity {
 			mMediaPlayer.setVolume(v, v);
 		}
 
-	}
-
-	/**
-	 * Private class for handling render thread events.
-	 */
-	private class GLQueueRunnable implements Runnable {
-		@Override
-		public void run() {
-			// Notify renderer.
-			mRenderer.onGLEvent();
-		}
 	}
 
 }

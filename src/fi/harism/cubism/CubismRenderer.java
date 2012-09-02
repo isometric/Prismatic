@@ -40,8 +40,8 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	private long mAnimationStart;
 	private int mAnimationStep;
 	private ByteBuffer mBufferQuad;
-	private final StructCube mCube = new StructCube();
 	private final StructCube[] mCubes;
+	private final CubismCube mCubeSkybox = new CubismCube();
 	private final CubismFbo mFboBloom = new CubismFbo();
 	private final CubismFbo mFboMain = new CubismFbo();
 	private final CubismFbo mFboShadowMap = new CubismFbo();
@@ -61,7 +61,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		mBufferQuad = ByteBuffer.allocateDirect(4 * 2);
 		mBufferQuad.put(FULL_QUAD_COORDS).position(0);
 
-		mCube.mCube.setScale(-6f);
+		mCubeSkybox.setScale(-6f);
 
 		int idx = 0;
 		int size = 10;
@@ -126,67 +126,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		return baos.toString();
 	}
 
-	@Override
-	public void onDrawFrame(GL10 unused) {
-		final float[] viewRotationM = new float[16];
-
-		// Render shadow map forward.
-		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0);
-		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-		Matrix.setIdentityM(viewRotationM, 0);
-		renderShadowMap(viewRotationM);
-
-		// Render shadow map left.
-		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0);
-		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-		CubismMatrix.setRotateM(viewRotationM, 0f, -90f, 0f);
-		renderShadowMap(viewRotationM);
-
-		// Render shadow map back.
-		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0);
-		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-		CubismMatrix.setRotateM(viewRotationM, 0f, 180f, 0f);
-		renderShadowMap(viewRotationM);
-
-		// Render shadow map right.
-		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0);
-		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-		CubismMatrix.setRotateM(viewRotationM, 0f, 90f, 0f);
-		renderShadowMap(viewRotationM);
-
-		// Render shadow map up.
-		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0);
-		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-		CubismMatrix.setRotateM(viewRotationM, -90f, 0f, 180f);
-		renderShadowMap(viewRotationM);
-
-		// Render shadow map down.
-		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0);
-		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-		CubismMatrix.setRotateM(viewRotationM, 90f, 0f, 180f);
-		renderShadowMap(viewRotationM);
-
-		// Render final scene.
-		// GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-		// GLES20.glViewport(0, 0, mWidth, mHeight);
-		mFboMain.bindTexture(GLES20.GL_TEXTURE_2D, 0);
-		GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-		renderCombine();
-
-		renderBloom();
-
-		mActivity.queueGLEvent();
-	}
-
-	public void onGLEvent() {
-		// Global rotation values.
+	private void onAnimateScene() {
 		long time = SystemClock.uptimeMillis();
 		float t = 0f;
 		switch (mAnimationStep) {
@@ -284,10 +224,6 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		Matrix.setLookAtM(Globals.mMatrixView, 0, Globals.mCameraPos[0],
 				Globals.mCameraPos[1], Globals.mCameraPos[2], 0f, 0f, 0f, 0f,
 				1f, 0f);
-		Matrix.setLookAtM(Globals.mMatrixLightView, 0, Globals.mLightPos[0],
-				Globals.mLightPos[1], Globals.mLightPos[2],
-				Globals.mCameraPos[0], Globals.mCameraPos[1],
-				Globals.mCameraPos[2], 0f, 1f, 0f);
 		Matrix.setIdentityM(Globals.mMatrixLightView, 0);
 		Matrix.translateM(Globals.mMatrixLightView, 0, -Globals.mLightPos[0],
 				-Globals.mLightPos[1], -Globals.mLightPos[2]);
@@ -308,22 +244,85 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 				tt = 1;
 			}
 
-			StructCube cube = mCubes[i];
+			StructCube structCube = mCubes[i];
 
-			interpolateV(cube.mPosition, cube.mPositionSource,
-					cube.mPositionTarget, tt);
-			cube.mCube.setTranslate(cube.mPosition[0], cube.mPosition[1],
-					cube.mPosition[2]);
+			interpolateV(structCube.mPosition, structCube.mPositionSource,
+					structCube.mPositionTarget, tt);
+			structCube.mCube.setTranslate(structCube.mPosition[0],
+					structCube.mPosition[1], structCube.mPosition[2]);
 
-			interpolateV(cube.mRotation, cube.mRotationSource,
-					cube.mRotationTarget, tt);
-			cube.mCube.setRotate(cube.mRotation[0], cube.mRotation[1],
-					cube.mRotation[2]);
-
-			Matrix.multiplyMM(cube.mMatrixModel, 0, rotateM, 0,
-					cube.mCube.getModelM(), 0);
+			interpolateV(structCube.mRotation, structCube.mRotationSource,
+					structCube.mRotationTarget, tt);
+			structCube.mCube.setRotate(structCube.mRotation[0],
+					structCube.mRotation[1], structCube.mRotation[2]);
 		}
-		System.arraycopy(mCube.mCube.getModelM(), 0, mCube.mMatrixModel, 0, 16);
+	}
+
+	@Override
+	public void onDrawFrame(GL10 unused) {
+		onAnimateScene();
+
+		final float[] viewRotationM = new float[16];
+
+		// Render shadow map forward.
+		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0);
+		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		Matrix.setIdentityM(viewRotationM, 0);
+		renderShadowMap(viewRotationM);
+
+		// Render shadow map right.
+		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0);
+		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		CubismMatrix.setRotateM(viewRotationM, 0f, -90f, 0f);
+		renderShadowMap(viewRotationM);
+
+		// Render shadow map back.
+		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0);
+		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		CubismMatrix.setRotateM(viewRotationM, 0f, 180f, 0f);
+		renderShadowMap(viewRotationM);
+
+		// Render shadow map left.
+		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0);
+		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		CubismMatrix.setRotateM(viewRotationM, 0f, 90f, 0f);
+		renderShadowMap(viewRotationM);
+
+		// Render shadow map down.
+		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0);
+		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		CubismMatrix.setRotateM(viewRotationM, -90f, 0f, 180f);
+		renderShadowMap(viewRotationM);
+
+		// Render shadow map up.
+		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0);
+		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		CubismMatrix.setRotateM(viewRotationM, 90f, 0f, 180f);
+		renderShadowMap(viewRotationM);
+
+		// Render final scene.
+		boolean renderBloom = true;
+		if (renderBloom) {
+			mFboMain.bindTexture(GLES20.GL_TEXTURE_2D, 0);
+			GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT
+					| GLES20.GL_DEPTH_BUFFER_BIT);
+			renderCombine();
+			renderBloom();
+		} else {
+			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+			GLES20.glViewport(0, 0, mWidth, mHeight);
+			GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT
+					| GLES20.GL_DEPTH_BUFFER_BIT);
+			renderCombine();
+		}
 	}
 
 	public void onMusicRepeat() {
@@ -456,8 +455,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		 * Third pass, combine source texture and calculated bloom texture into
 		 * output texture.
 		 */
-		// fbo.bind();
-		// fbo.bindTexture(0);
+
 		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 		GLES20.glViewport(0, 0, mWidth, mHeight);
 
@@ -518,21 +516,21 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		Matrix.multiplyMM(viewProjM, 0, Globals.mMatrixPerspective, 0,
 				Globals.mMatrixView, 0);
 
-		for (StructCube cube : mCubes) {
+		for (StructCube structCube : mCubes) {
 			results[0] = -1;
 			Matrix.multiplyMM(modelViewProjM, 0, viewProjM, 0,
-					cube.mMatrixModel, 0);
+					structCube.mCube.getModelM(), 0);
 			Visibility.frustumCullSpheres(modelViewProjM, 0, boundingSphere, 0,
 					1, results, 0, 1);
 
 			if (results[0] == 0) {
-				GLES20.glUniformMatrix4fv(uModelM, 1, false, cube.mMatrixModel,
-						0);
+				GLES20.glUniformMatrix4fv(uModelM, 1, false,
+						structCube.mCube.getModelM(), 0);
 				GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
 			}
 		}
 
-		GLES20.glUniformMatrix4fv(uModelM, 1, false, mCube.mMatrixModel, 0);
+		GLES20.glUniformMatrix4fv(uModelM, 1, false, mCubeSkybox.getModelM(), 0);
 		GLES20.glUniform3f(uColor, .5f, .5f, .5f);
 
 		GLES20.glVertexAttribPointer(aNormal, 3, GLES20.GL_BYTE, false, 0,
@@ -574,20 +572,20 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		GLES20.glEnable(GLES20.GL_CULL_FACE);
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
-		for (StructCube cube : mCubes) {
+		for (StructCube structCube : mCubes) {
 			results[0] = -1;
 			Matrix.multiplyMM(modelViewProjM, 0, viewProjM, 0,
-					cube.mMatrixModel, 0);
+					structCube.mCube.getModelM(), 0);
 			Visibility.frustumCullSpheres(modelViewProjM, 0, boundingSphere, 0,
 					1, results, 0, 1);
 			if (results[0] == 0) {
-				GLES20.glUniformMatrix4fv(uModelM, 1, false, cube.mMatrixModel,
-						0);
+				GLES20.glUniformMatrix4fv(uModelM, 1, false,
+						structCube.mCube.getModelM(), 0);
 				GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
 			}
 		}
 
-		GLES20.glUniformMatrix4fv(uModelM, 1, false, mCube.mMatrixModel, 0);
+		GLES20.glUniformMatrix4fv(uModelM, 1, false, mCubeSkybox.getModelM(), 0);
 
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
 
@@ -621,7 +619,6 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 
 	private class StructCube {
 		public final CubismCube mCube = new CubismCube();
-		public final float[] mMatrixModel = new float[16];
 
 		public final float[] mPosition = new float[3];
 		public final float[] mPositionSource = new float[3];
