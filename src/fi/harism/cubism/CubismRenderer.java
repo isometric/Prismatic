@@ -33,6 +33,7 @@ import android.opengl.Visibility;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.util.FloatMath;
 import android.widget.Toast;
 
 public class CubismRenderer implements GLSurfaceView.Renderer {
@@ -134,7 +135,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	/**
 	 * Calculates scene animation.
 	 */
-	private synchronized void onAnimateScene() {
+	private void onAnimateScene() {
 		long time = SystemClock.uptimeMillis();
 		long timeDiff = time - mAnimationStart;
 
@@ -164,21 +165,21 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 						* (float) (.5 + Math.random());
 			}
 
-			final double sortX = Math.random() * 10 - 5;
-			final double sortY = Math.random() * 10 - 5;
-			final double sortZ = Math.random() * 10 - 5;
+			float gravityX = (float) (Math.random() * 10 - 5);
+			float gravityY = (float) (Math.random() * 10 - 5);
+			float gravityZ = (float) (Math.random() * 10 - 5);
+			for (StructCube cube : mCubes) {
+				float dx = cube.mPositionSource[0] - gravityX;
+				float dy = cube.mPositionSource[1] - gravityY;
+				float dz = cube.mPositionSource[2] - gravityZ;
+				cube.mDistanceFromGravity = FloatMath.sqrt(dx * dx + dy * dy
+						+ dz * dz);
+			}
 			Arrays.sort(mCubes, new Comparator<StructCube>() {
 				@Override
 				public int compare(StructCube c0, StructCube c1) {
-					double dx0 = c0.mPosition[0] - sortX;
-					double dy0 = c0.mPosition[1] - sortY;
-					double dz0 = c0.mPosition[2] - sortZ;
-					double dx1 = c1.mPosition[0] - sortX;
-					double dy1 = c1.mPosition[1] - sortY;
-					double dz1 = c1.mPosition[2] - sortZ;
-					double dist0 = Math.sqrt(dx0 * dx0 + dy0 * dy0 + dz0 * dz0);
-					double dist1 = Math.sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
-					return dist0 < dist1 ? -1 : 1;
+					return c0.mDistanceFromGravity < c1.mDistanceFromGravity ? -1
+							: 1;
 				}
 			});
 			mAnimationStart = time;
@@ -266,8 +267,16 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	}
 
 	@Override
-	public synchronized void onDrawFrame(GL10 unused) {
-		// onAnimateScene();
+	public void onDrawFrame(GL10 unused) {
+		if (mAnimationRunnable.mRunning) {
+			synchronized (mAnimationRunnable.mLock) {
+				try {
+					mAnimationRunnable.mLock.wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 
 		final float[] viewRotationM = new float[16];
 
@@ -610,14 +619,18 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	private class AnimationRunnable implements Runnable {
 
 		private Object mLock = new Object();
+		private boolean mRunning;
 		private boolean mStop;
 
 		@Override
 		public void run() {
 			while (!mStop) {
+				mRunning = true;
 				onAnimateScene();
+				mRunning = false;
 				synchronized (mLock) {
 					try {
+						mLock.notifyAll();
 						mLock.wait();
 					} catch (InterruptedException e) {
 						e.printStackTrace();
@@ -644,12 +657,14 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	private class StructCube {
 		public final CubismCube mCube = new CubismCube();
 
+		public float mDistanceFromGravity;
 		public final float[] mPosition = new float[3];
 		public final float[] mPositionSource = new float[3];
-		public final float[] mPositionTarget = new float[3];
 
+		public final float[] mPositionTarget = new float[3];
 		public final float[] mRotation = new float[3];
 		public final float[] mRotationSource = new float[3];
+
 		public final float[] mRotationTarget = new float[3];
 	}
 
