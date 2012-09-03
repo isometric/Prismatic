@@ -37,13 +37,17 @@ import android.widget.Toast;
 
 public class CubismRenderer implements GLSurfaceView.Renderer {
 
+	private static final int CUBE_DIV = 10;
+	private static final int CUBE_SZ = CUBE_DIV * CUBE_DIV * 2 + CUBE_DIV
+			* (CUBE_DIV - 2) * 2 + (CUBE_DIV - 2) * (CUBE_DIV - 2) * 2;
+
 	private final AnimationRunnable mAnimationRunnable = new AnimationRunnable();
 	private long mAnimationStart;
 	private int mAnimationStep;
 	private ByteBuffer mBufferQuad;
 	private Context mContext;
-	private final StructCube[] mCubes;
-	private final CubismCube mCubeSkybox = new CubismCube();
+	private StructCube[] mCubes;
+	private float[] mCubesBoundingSpheres;
 	private final CubismFbo mFboBloom = new CubismFbo();
 	private final CubismFbo mFboMain = new CubismFbo();
 	private final CubismFbo mFboShadowMap = new CubismFbo();
@@ -53,6 +57,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	private final boolean[] mShaderCompilerSupport = new boolean[1];
 	private final CubismShader mShaderDepth = new CubismShader();
 	private final CubismShader mShaderMain = new CubismShader();
+	private final CubismCube mSkybox = new CubismCube();
 	private int mWidth, mHeight;
 
 	public CubismRenderer(Context context) {
@@ -63,19 +68,18 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		mBufferQuad = ByteBuffer.allocateDirect(4 * 2);
 		mBufferQuad.put(FULL_QUAD_COORDS).position(0);
 
-		mCubeSkybox.setScale(-6f);
+		mSkybox.setScale(-6f);
 
 		int idx = 0;
-		int size = 10;
-		mCubes = new StructCube[size * size * 2 + size * (size - 2) * 2
-				+ (size - 2) * (size - 2) * 2];
-		for (int x = 0; x < size; ++x) {
-			for (int y = 0; y < size; ++y) {
-				for (int z = 0; z < size;) {
+		mCubes = new StructCube[CUBE_SZ];
+		mCubesBoundingSpheres = new float[CUBE_SZ * 4];
+		for (int x = 0; x < CUBE_DIV; ++x) {
+			for (int y = 0; y < CUBE_DIV; ++y) {
+				for (int z = 0; z < CUBE_DIV;) {
 					mCubes[idx] = new StructCube();
-					mCubes[idx].mCube.setScale(1f / (size - 1));
+					mCubes[idx].mCube.setScale(1f / (CUBE_DIV - 1));
 
-					float t = 2f / (size - 1);
+					float t = 2f / (CUBE_DIV - 1);
 					float tx = x * t - 1;
 					float ty = y * t - 1;
 					float tz = z * t - 1;
@@ -97,8 +101,8 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 
 					++idx;
 
-					if (x > 0 && y > 0 && x < size - 1 && y < size - 1) {
-						z += size - 1;
+					if (x > 0 && y > 0 && x < CUBE_DIV - 1 && y < CUBE_DIV - 1) {
+						z += CUBE_DIV - 1;
 					} else {
 						++z;
 					}
@@ -246,13 +250,18 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 
 			interpolateV(structCube.mPosition, structCube.mPositionSource,
 					structCube.mPositionTarget, t);
-			structCube.mCube.setTranslate(structCube.mPosition[0],
-					structCube.mPosition[1], structCube.mPosition[2]);
-
 			interpolateV(structCube.mRotation, structCube.mRotationSource,
 					structCube.mRotationTarget, t);
+
+			structCube.mCube.setTranslate(structCube.mPosition[0],
+					structCube.mPosition[1], structCube.mPosition[2]);
 			structCube.mCube.setRotate(structCube.mRotation[0],
 					structCube.mRotation[1], structCube.mRotation[2]);
+
+			final float[] cubeVec = { 0, 0, 0, 1f };
+			Matrix.multiplyMV(mCubesBoundingSpheres, i * 4,
+					structCube.mCube.getModelM(), 0, cubeVec, 0);
+			mCubesBoundingSpheres[i * 4 + 3] = 1.41421356237f / (CUBE_DIV - 1);
 		}
 	}
 
@@ -513,29 +522,23 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 
 		GLES20.glUniform3f(uColor, .4f, .6f, 1f);
 
-		final float[] boundingSphere = { 0, 0, 0, 1.41421356237f };
+		final int[] results = new int[CUBE_SZ];
 		final float[] viewProjM = new float[16];
-		final float[] modelViewProjM = new float[16];
-		final int[] results = new int[1];
 
+		Arrays.fill(results, -1);
 		Matrix.multiplyMM(viewProjM, 0, Globals.mMatrixPerspective, 0,
 				Globals.mMatrixView, 0);
 
-		for (StructCube structCube : mCubes) {
-			results[0] = -1;
-			Matrix.multiplyMM(modelViewProjM, 0, viewProjM, 0,
-					structCube.mCube.getModelM(), 0);
-			Visibility.frustumCullSpheres(modelViewProjM, 0, boundingSphere, 0,
-					1, results, 0, 1);
+		Visibility.frustumCullSpheres(viewProjM, 0, mCubesBoundingSpheres, 0,
+				CUBE_SZ, results, 0, CUBE_SZ);
 
-			if (results[0] == 0) {
-				GLES20.glUniformMatrix4fv(uModelM, 1, false,
-						structCube.mCube.getModelM(), 0);
-				GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
-			}
+		for (int i = 0; i < CUBE_SZ && results[i] >= 0; ++i) {
+			GLES20.glUniformMatrix4fv(uModelM, 1, false,
+					mCubes[results[i]].mCube.getModelM(), 0);
+			GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
 		}
 
-		GLES20.glUniformMatrix4fv(uModelM, 1, false, mCubeSkybox.getModelM(), 0);
+		GLES20.glUniformMatrix4fv(uModelM, 1, false, mSkybox.getModelM(), 0);
 		GLES20.glUniform3f(uColor, .5f, .5f, .5f);
 
 		GLES20.glVertexAttribPointer(aNormal, 3, GLES20.GL_BYTE, false, 0,
@@ -556,12 +559,11 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		int uProjM = mShaderDepth.getHandle("uProjM");
 		int aPosition = mShaderDepth.getHandle("aPosition");
 
-		final float[] boundingSphere = { 0, 0, 0, 1.41421356237f };
+		final int[] results = new int[CUBE_SZ];
 		final float[] viewM = new float[16];
 		final float[] viewProjM = new float[16];
-		final float[] modelViewProjM = new float[16];
-		final int[] results = new int[1];
 
+		Arrays.fill(results, -1);
 		Matrix.multiplyMM(viewM, 0, viewRotateM, 0, Globals.mMatrixLightView, 0);
 		Matrix.multiplyMM(viewProjM, 0, Globals.mMatrixLightPerspective, 0,
 				viewM, 0);
@@ -577,20 +579,16 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		GLES20.glEnable(GLES20.GL_CULL_FACE);
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
-		for (StructCube structCube : mCubes) {
-			results[0] = -1;
-			Matrix.multiplyMM(modelViewProjM, 0, viewProjM, 0,
-					structCube.mCube.getModelM(), 0);
-			Visibility.frustumCullSpheres(modelViewProjM, 0, boundingSphere, 0,
-					1, results, 0, 1);
-			if (results[0] == 0) {
-				GLES20.glUniformMatrix4fv(uModelM, 1, false,
-						structCube.mCube.getModelM(), 0);
-				GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
-			}
+		Visibility.frustumCullSpheres(viewProjM, 0, mCubesBoundingSpheres, 0,
+				CUBE_SZ, results, 0, CUBE_SZ);
+
+		for (int i = 0; i < CUBE_SZ && results[i] >= 0; ++i) {
+			GLES20.glUniformMatrix4fv(uModelM, 1, false,
+					mCubes[results[i]].mCube.getModelM(), 0);
+			GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
 		}
 
-		GLES20.glUniformMatrix4fv(uModelM, 1, false, mCubeSkybox.getModelM(), 0);
+		GLES20.glUniformMatrix4fv(uModelM, 1, false, mSkybox.getModelM(), 0);
 
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
 
