@@ -68,6 +68,8 @@ public class CubismCube {
 		return mBufferVertices;
 	}
 
+	private final float[] mBoundingSphere = new float[4];
+	private final float[] mColor = new float[3];
 	private final float[] mMatrixModel = new float[16];
 	private final float[] mMatrixRotate = new float[16];
 	private final float[] mMatrixScale = new float[16];
@@ -81,6 +83,14 @@ public class CubismCube {
 		Matrix.setIdentityM(mMatrixModel, 0);
 	}
 
+	public float[] getBoundingSphere() {
+		return mBoundingSphere;
+	}
+
+	public float[] getColor() {
+		return mColor;
+	}
+
 	public float[] getModelM() {
 		if (mRecalculate) {
 			Matrix.multiplyMM(mMatrixModel, 0, mMatrixRotate, 0, mMatrixScale,
@@ -92,20 +102,30 @@ public class CubismCube {
 		return mMatrixModel;
 	}
 
+	public void setColor(float r, float g, float b) {
+		mColor[0] = r;
+		mColor[1] = g;
+		mColor[2] = b;
+	}
+
 	public void setRotate(float rx, float ry, float rz) {
-		CubismMatrix.setRotateM(mMatrixRotate, rx, ry, rz);
+		CubismUtils.setRotateM(mMatrixRotate, rx, ry, rz);
 		mRecalculate = true;
 	}
 
 	public void setScale(float scale) {
 		Matrix.setIdentityM(mMatrixScale, 0);
 		Matrix.scaleM(mMatrixScale, 0, scale, scale, scale);
+		mBoundingSphere[3] = 1.41421356237f * scale;
 		mRecalculate = true;
 	}
 
 	public void setTranslate(float tx, float ty, float tz) {
 		Matrix.setIdentityM(mMatrixTranslate, 0);
 		Matrix.translateM(mMatrixTranslate, 0, tx, ty, tz);
+		mBoundingSphere[0] = tx;
+		mBoundingSphere[1] = ty;
+		mBoundingSphere[2] = tz;
 		mRecalculate = true;
 	}
 

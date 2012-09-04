@@ -19,7 +19,14 @@ package fi.harism.cubism;
 import android.opengl.Matrix;
 import android.util.FloatMath;
 
-public final class CubismMatrix {
+public final class CubismUtils {
+
+	public static void interpolateV(float[] out, float[] src, float[] dst,
+			float t) {
+		for (int i = 0; i < 3; ++i) {
+			out[i] = src[i] + (dst[i] - src[i]) * t;
+		}
+	}
 
 	/**
 	 * Fast inverse-transpose matrix calculation. See

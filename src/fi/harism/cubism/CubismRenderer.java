@@ -19,8 +19,6 @@ package fi.harism.cubism;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Comparator;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -30,30 +28,23 @@ import android.media.MediaPlayer;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
-import android.opengl.Visibility;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.FloatMath;
 import android.widget.Toast;
 
-public class CubismRenderer implements GLSurfaceView.Renderer {
+public final class CubismRenderer implements GLSurfaceView.Renderer {
 
-	private static final int CUBE_DIV = 10;
-	private static final float CUBE_SCALE = 1.41421356237f / (CUBE_DIV - 1);
-	private static final int CUBE_SZ = CUBE_DIV * CUBE_DIV * 2 + CUBE_DIV
-			* (CUBE_DIV - 2) * 2 + (CUBE_DIV - 2) * (CUBE_DIV - 2) * 2;
-
-	private long mAnimationPos;
 	private final AnimationRunnable mAnimationRunnable = new AnimationRunnable();
-	private int mAnimationStep;
 	private ByteBuffer mBufferQuad;
 	private Context mContext;
-	private StructCube[] mCubes;
-	private float[] mCubesBoundingSpheres;
 	private final CubismFbo mFboBloom = new CubismFbo();
 	private final CubismFbo mFboMain = new CubismFbo();
 	private final CubismFbo mFboShadowMap = new CubismFbo();
+	private final float[] mMatrixLightPerspective = new float[16];
+	private final float[] mMatrixPerspective = new float[16];
 	private MediaPlayer mMediaPlayer;
+	private final float[] mPlanes = new float[24];
+	private final CubismScene mScene = new CubismScene();
 	private final CubismShader mShaderBloom1 = new CubismShader();
 	private final CubismShader mShaderBloom2 = new CubismShader();
 	private final CubismShader mShaderBloom3 = new CubismShader();
@@ -73,52 +64,6 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		mBufferQuad.put(FULL_QUAD_COORDS).position(0);
 
 		mSkybox.setScale(-6f);
-
-		int idx = 0;
-		mCubes = new StructCube[CUBE_SZ];
-		mCubesBoundingSpheres = new float[CUBE_SZ * 4];
-		for (int x = 0; x < CUBE_DIV; ++x) {
-			for (int y = 0; y < CUBE_DIV; ++y) {
-				for (int z = 0; z < CUBE_DIV;) {
-					mCubes[idx] = new StructCube();
-					mCubes[idx].mCube.setScale(CUBE_SCALE);
-
-					float t = 2f / (CUBE_DIV - 1);
-					float tx = x * t - 1;
-					float ty = y * t - 1;
-					float tz = z * t - 1;
-
-					mCubes[idx].mPositionSource[0] = tx;
-					mCubes[idx].mPositionSource[1] = ty;
-					mCubes[idx].mPositionSource[2] = tz;
-
-					mCubes[idx].mPositionTarget[0] = tx + tx
-							* (float) (3 * Math.random());
-					mCubes[idx].mPositionTarget[1] = ty + ty
-							* (float) (3 * Math.random());
-					mCubes[idx].mPositionTarget[2] = tz + tz
-							* (float) (3 * Math.random());
-
-					mCubes[idx].mRotationTarget[0] = (float) (Math.random() * 720 - 360);
-					mCubes[idx].mRotationTarget[1] = (float) (Math.random() * 720 - 360);
-					mCubes[idx].mRotationTarget[2] = (float) (Math.random() * 720 - 360);
-
-					++idx;
-
-					if (x > 0 && y > 0 && x < CUBE_DIV - 1 && y < CUBE_DIV - 1) {
-						z += CUBE_DIV - 1;
-					} else {
-						++z;
-					}
-				}
-			}
-		}
-	}
-
-	private void interpolateV(float[] out, float[] src, float[] dst, float t) {
-		for (int i = 0; i < 3; ++i) {
-			out[i] = src[i] + (dst[i] - src[i]) * t;
-		}
 	}
 
 	/**
@@ -133,145 +78,6 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 			baos.write(buf, 0, len);
 		}
 		return baos.toString();
-	}
-
-	/**
-	 * Calculates scene animation.
-	 */
-	private void onAnimateScene() {
-		long musicPos = mMediaPlayer.getCurrentPosition();
-		if (musicPos < mAnimationPos) {
-			mAnimationStep = 1;
-		}
-		mAnimationPos = musicPos;
-
-		/**
-		 * Camera and light movement.
-		 */
-		float tCamera = 0f;
-		switch (mAnimationStep) {
-		case 0: {
-			for (int i = 0; i < 3; ++i) {
-				Globals.mCameraPosTarget[i] = (float) (Math.random() * 6 - 3);
-				Globals.mCameraPosTarget[i] += Globals.mCameraPosTarget[i] > 0 ? 3
-						: -3;
-				Globals.mLightPosTarget[i] = Globals.mCameraPosTarget[i]
-						* (float) (.5 + Math.random());
-			}
-		}
-		case 1: {
-			for (int i = 0; i < 3; ++i) {
-				Globals.mCameraPosSource[i] = Globals.mCameraPosTarget[i];
-				Globals.mCameraPosTarget[i] = (float) (Math.random() * 6 - 3);
-				Globals.mCameraPosTarget[i] += Globals.mCameraPosTarget[i] > 0 ? 3
-						: -3;
-
-				Globals.mLightPosSource[i] = Globals.mLightPosTarget[i];
-				Globals.mLightPosTarget[i] = Globals.mCameraPosTarget[i]
-						* (float) (.5 + Math.random());
-			}
-
-			float gravityX = (float) (Math.random() * 10 - 5);
-			float gravityY = (float) (Math.random() * 10 - 5);
-			float gravityZ = (float) (Math.random() * 10 - 5);
-			for (StructCube cube : mCubes) {
-				float dx = cube.mPositionSource[0] - gravityX;
-				float dy = cube.mPositionSource[1] - gravityY;
-				float dz = cube.mPositionSource[2] - gravityZ;
-				cube.mDistanceFromGravity = FloatMath.sqrt(dx * dx + dy * dy
-						+ dz * dz);
-			}
-			Arrays.sort(mCubes, new Comparator<StructCube>() {
-				@Override
-				public int compare(StructCube c0, StructCube c1) {
-					return c0.mDistanceFromGravity < c1.mDistanceFromGravity ? -1
-							: 1;
-				}
-			});
-
-			mAnimationStep = 2;
-			break;
-		}
-		case 2: {
-			if (mAnimationPos < 7600) {
-				tCamera = mAnimationPos / 7600f;
-				tCamera = tCamera * tCamera * (3 - 2 * tCamera);
-				break;
-			}
-
-			for (int i = 0; i < 3; ++i) {
-				Globals.mCameraPosSource[i] = (float) (Math.random() * 6 - 3);
-				Globals.mCameraPosSource[i] += Globals.mCameraPosSource[i] > 0 ? 3
-						: -3;
-				Globals.mCameraPosTarget[i] = (float) (Math.random() * 6 - 3);
-				Globals.mCameraPosTarget[i] += Globals.mCameraPosTarget[i] > 0 ? 3
-						: -3;
-
-				Globals.mLightPosSource[i] = Globals.mCameraPosSource[i]
-						* (float) (.5 + Math.random());
-				Globals.mLightPosTarget[i] = Globals.mCameraPosTarget[i]
-						* (float) (.5 + Math.random());
-			}
-
-			mAnimationStep = 3;
-		}
-		case 3: {
-			tCamera = (mAnimationPos - 7600) / (11200f - 7600f);
-			tCamera = tCamera * tCamera * (3 - 2 * tCamera);
-			break;
-		}
-		}
-
-		interpolateV(Globals.mCameraPos, Globals.mCameraPosSource,
-				Globals.mCameraPosTarget, tCamera);
-		interpolateV(Globals.mLightPos, Globals.mLightPosSource,
-				Globals.mLightPosTarget, tCamera);
-
-		Matrix.setLookAtM(Globals.mMatrixView, 0, Globals.mCameraPos[0],
-				Globals.mCameraPos[1], Globals.mCameraPos[2], 0f, 0f, 0f, 0f,
-				1f, 0f);
-		Matrix.setIdentityM(Globals.mMatrixLightView, 0);
-		Matrix.translateM(Globals.mMatrixLightView, 0, -Globals.mLightPos[0],
-				-Globals.mLightPos[1], -Globals.mLightPos[2]);
-
-		/**
-		 * Big cube "explosion".
-		 */
-		float tExplode = 0f;
-		if (mAnimationPos > 2000 && mAnimationPos <= 9000) {
-			tExplode = (mAnimationPos - 2000) / 7000f;
-		} else if (mAnimationPos > 9000) {
-			tExplode = 1f - (mAnimationPos - 9000) / 2200f;
-		}
-		if (tExplode > 1)
-			tExplode = 1;
-		if (tExplode < 0)
-			tExplode = 0;
-
-		for (int i = 0; i < mCubes.length; ++i) {
-			float t = 1f - (float) i / mCubes.length;
-			t = tExplode * t;
-			t = t * t * (3 - 2 * t);
-
-			StructCube structCube = mCubes[i];
-
-			interpolateV(structCube.mPosition, structCube.mPositionSource,
-					structCube.mPositionTarget, t);
-			interpolateV(structCube.mRotation, structCube.mRotationSource,
-					structCube.mRotationTarget, t);
-
-			structCube.mCube.setTranslate(structCube.mPosition[0],
-					structCube.mPosition[1], structCube.mPosition[2]);
-			structCube.mCube.setRotate(structCube.mRotation[0],
-					structCube.mRotation[1], structCube.mRotation[2]);
-
-			// Since we're dealing with cubes bounding sphere position is cube
-			// position and radius changes according to scale factor.
-			mCubesBoundingSpheres[i * 4 + 0] = structCube.mPosition[0];
-			mCubesBoundingSpheres[i * 4 + 1] = structCube.mPosition[1];
-			mCubesBoundingSpheres[i * 4 + 2] = structCube.mPosition[2];
-			mCubesBoundingSpheres[i * 4 + 3] = CUBE_SCALE;
-		}
 	}
 
 	@Override
@@ -297,31 +103,31 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		// Render shadow map right.
 		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0);
 		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
-		CubismMatrix.setRotateM(viewRotationM, 0f, -90f, 0f);
+		CubismUtils.setRotateM(viewRotationM, 0f, -90f, 0f);
 		renderShadowMap(viewRotationM);
 
 		// Render shadow map back.
 		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0);
 		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
-		CubismMatrix.setRotateM(viewRotationM, 0f, 180f, 0f);
+		CubismUtils.setRotateM(viewRotationM, 0f, 180f, 0f);
 		renderShadowMap(viewRotationM);
 
 		// Render shadow map left.
 		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0);
 		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
-		CubismMatrix.setRotateM(viewRotationM, 0f, 90f, 0f);
+		CubismUtils.setRotateM(viewRotationM, 0f, 90f, 0f);
 		renderShadowMap(viewRotationM);
 
 		// Render shadow map down.
 		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0);
 		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
-		CubismMatrix.setRotateM(viewRotationM, -90f, 0f, 180f);
+		CubismUtils.setRotateM(viewRotationM, -90f, 0f, 180f);
 		renderShadowMap(viewRotationM);
 
 		// Render shadow map up.
 		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0);
 		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
-		CubismMatrix.setRotateM(viewRotationM, 90f, 0f, 180f);
+		CubismUtils.setRotateM(viewRotationM, 90f, 0f, 180f);
 		renderShadowMap(viewRotationM);
 
 		// Render final scene.
@@ -363,10 +169,8 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		mHeight = height;
 
 		float aspectR = (float) mWidth / mHeight;
-		CubismMatrix.setPerspectiveM(Globals.mMatrixPerspective, 45f, aspectR,
-				.1f, 40f);
-		CubismMatrix.setPerspectiveM(Globals.mMatrixLightPerspective, 90f, 1f,
-				.1f, 40f);
+		CubismUtils.setPerspectiveM(mMatrixPerspective, 45f, aspectR, .1f, 40f);
+		CubismUtils.setPerspectiveM(mMatrixLightPerspective, 90f, 1f, .1f, 40f);
 
 		mFboShadowMap
 				.init(512, 512, GLES20.GL_TEXTURE_CUBE_MAP, 1, true, false);
@@ -512,7 +316,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		int aPosition = mShaderMain.getHandle("aPosition");
 		int aNormal = mShaderMain.getHandle("aNormal");
 
-		GLES20.glUniform3fv(uLightPos, 1, Globals.mLightPos, 0);
+		GLES20.glUniform3fv(uLightPos, 1, mScene.getLightPosition(), 0);
 
 		GLES20.glVertexAttribPointer(aPosition, 3, GLES20.GL_BYTE, false, 0,
 				CubismCube.getVertices());
@@ -529,26 +333,25 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		GLES20.glEnable(GLES20.GL_CULL_FACE);
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
-		GLES20.glUniformMatrix4fv(uViewM, 1, false, Globals.mMatrixView, 0);
-		GLES20.glUniformMatrix4fv(uProjM, 1, false, Globals.mMatrixPerspective,
-				0);
+		GLES20.glUniformMatrix4fv(uViewM, 1, false, mScene.getViewM(), 0);
+		GLES20.glUniformMatrix4fv(uProjM, 1, false, mMatrixPerspective, 0);
 
 		GLES20.glUniform3f(uColor, .4f, .6f, 1f);
 
-		final int[] results = new int[CUBE_SZ];
 		final float[] viewProjM = new float[16];
+		Matrix.multiplyMM(viewProjM, 0, mMatrixPerspective, 0,
+				mScene.getViewM(), 0);
 
-		Arrays.fill(results, -1);
-		Matrix.multiplyMM(viewProjM, 0, Globals.mMatrixPerspective, 0,
-				Globals.mMatrixView, 0);
+		CubismVisibility.extractPlanes(viewProjM, mPlanes);
 
-		Visibility.frustumCullSpheres(viewProjM, 0, mCubesBoundingSpheres, 0,
-				CUBE_SZ, results, 0, CUBE_SZ);
-
-		for (int i = 0; i < CUBE_SZ && results[i] >= 0; ++i) {
-			GLES20.glUniformMatrix4fv(uModelM, 1, false,
-					mCubes[results[i]].mCube.getModelM(), 0);
-			GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
+		CubismCube[] cubes = mScene.getCubes();
+		for (int i = 0; i < cubes.length; ++i) {
+			if (CubismVisibility.intersects(mPlanes,
+					cubes[i].getBoundingSphere())) {
+				GLES20.glUniformMatrix4fv(uModelM, 1, false,
+						cubes[i].getModelM(), 0);
+				GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
+			}
 		}
 
 		GLES20.glUniformMatrix4fv(uModelM, 1, false, mSkybox.getModelM(), 0);
@@ -572,18 +375,14 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		int uProjM = mShaderDepth.getHandle("uProjM");
 		int aPosition = mShaderDepth.getHandle("aPosition");
 
-		final int[] results = new int[CUBE_SZ];
 		final float[] viewM = new float[16];
 		final float[] viewProjM = new float[16];
 
-		Arrays.fill(results, -1);
-		Matrix.multiplyMM(viewM, 0, viewRotateM, 0, Globals.mMatrixLightView, 0);
-		Matrix.multiplyMM(viewProjM, 0, Globals.mMatrixLightPerspective, 0,
-				viewM, 0);
+		Matrix.multiplyMM(viewM, 0, viewRotateM, 0, mScene.getLightViewM(), 0);
+		Matrix.multiplyMM(viewProjM, 0, mMatrixLightPerspective, 0, viewM, 0);
 
 		GLES20.glUniformMatrix4fv(uViewM, 1, false, viewM, 0);
-		GLES20.glUniformMatrix4fv(uProjM, 1, false,
-				Globals.mMatrixLightPerspective, 0);
+		GLES20.glUniformMatrix4fv(uProjM, 1, false, mMatrixLightPerspective, 0);
 
 		GLES20.glVertexAttribPointer(aPosition, 3, GLES20.GL_BYTE, false, 0,
 				CubismCube.getVertices());
@@ -592,13 +391,16 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		GLES20.glEnable(GLES20.GL_CULL_FACE);
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
-		Visibility.frustumCullSpheres(viewProjM, 0, mCubesBoundingSpheres, 0,
-				CUBE_SZ, results, 0, CUBE_SZ);
+		CubismVisibility.extractPlanes(viewProjM, mPlanes);
 
-		for (int i = 0; i < CUBE_SZ && results[i] >= 0; ++i) {
-			GLES20.glUniformMatrix4fv(uModelM, 1, false,
-					mCubes[results[i]].mCube.getModelM(), 0);
-			GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
+		CubismCube[] cubes = mScene.getCubes();
+		for (int i = 0; i < cubes.length; ++i) {
+			if (CubismVisibility.intersects(mPlanes,
+					cubes[i].getBoundingSphere())) {
+				GLES20.glUniformMatrix4fv(uModelM, 1, false,
+						cubes[i].getModelM(), 0);
+				GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
+			}
 		}
 
 		GLES20.glUniformMatrix4fv(uModelM, 1, false, mSkybox.getModelM(), 0);
@@ -630,7 +432,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		public void run() {
 			while (!mStop) {
 				mRunning = true;
-				onAnimateScene();
+				mScene.animate(mMediaPlayer.getCurrentPosition() / 1000f);
 				mRunning = false;
 				synchronized (mLock) {
 					try {
@@ -643,33 +445,6 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 			}
 		}
 
-	}
-
-	private static class Globals {
-		public static final float[] mCameraPos = new float[3];
-		public static final float[] mCameraPosSource = new float[3];
-		public static final float[] mCameraPosTarget = new float[3];
-		public static final float[] mLightPos = new float[3];
-		public static final float[] mLightPosSource = new float[3];
-		public static final float[] mLightPosTarget = new float[3];
-		public static final float[] mMatrixLightPerspective = new float[16];
-		public static final float[] mMatrixLightView = new float[16];
-		public static final float[] mMatrixPerspective = new float[16];
-		public static final float[] mMatrixView = new float[16];
-	}
-
-	private class StructCube {
-		public final CubismCube mCube = new CubismCube();
-
-		public float mDistanceFromGravity;
-		public final float[] mPosition = new float[3];
-		public final float[] mPositionSource = new float[3];
-
-		public final float[] mPositionTarget = new float[3];
-		public final float[] mRotation = new float[3];
-		public final float[] mRotationSource = new float[3];
-
-		public final float[] mRotationTarget = new float[3];
 	}
 
 }
