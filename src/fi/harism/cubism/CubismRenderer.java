@@ -39,6 +39,7 @@ import android.widget.Toast;
 public class CubismRenderer implements GLSurfaceView.Renderer {
 
 	private static final int CUBE_DIV = 10;
+	private static final float CUBE_SCALE = 1.41421356237f / (CUBE_DIV - 1);
 	private static final int CUBE_SZ = CUBE_DIV * CUBE_DIV * 2 + CUBE_DIV
 			* (CUBE_DIV - 2) * 2 + (CUBE_DIV - 2) * (CUBE_DIV - 2) * 2;
 
@@ -80,7 +81,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 			for (int y = 0; y < CUBE_DIV; ++y) {
 				for (int z = 0; z < CUBE_DIV;) {
 					mCubes[idx] = new StructCube();
-					mCubes[idx].mCube.setScale(1f / (CUBE_DIV - 1));
+					mCubes[idx].mCube.setScale(CUBE_SCALE);
 
 					float t = 2f / (CUBE_DIV - 1);
 					float tx = x * t - 1;
@@ -264,10 +265,12 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 			structCube.mCube.setRotate(structCube.mRotation[0],
 					structCube.mRotation[1], structCube.mRotation[2]);
 
-			final float[] cubeVec = { 0, 0, 0, 1f };
-			Matrix.multiplyMV(mCubesBoundingSpheres, i * 4,
-					structCube.mCube.getModelM(), 0, cubeVec, 0);
-			mCubesBoundingSpheres[i * 4 + 3] = 1.41421356237f / (CUBE_DIV - 1);
+			// Since we're dealing with cubes bounding sphere position is cube
+			// position and radius changes according to scale factor.
+			mCubesBoundingSpheres[i * 4 + 0] = structCube.mPosition[0];
+			mCubesBoundingSpheres[i * 4 + 1] = structCube.mPosition[1];
+			mCubesBoundingSpheres[i * 4 + 2] = structCube.mPosition[2];
+			mCubesBoundingSpheres[i * 4 + 3] = CUBE_SCALE;
 		}
 	}
 
