@@ -26,13 +26,13 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.content.Context;
+import android.media.MediaPlayer;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.opengl.Visibility;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.SystemClock;
 import android.util.FloatMath;
 import android.widget.Toast;
 
@@ -42,8 +42,8 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	private static final int CUBE_SZ = CUBE_DIV * CUBE_DIV * 2 + CUBE_DIV
 			* (CUBE_DIV - 2) * 2 + (CUBE_DIV - 2) * (CUBE_DIV - 2) * 2;
 
+	private long mAnimationPos;
 	private final AnimationRunnable mAnimationRunnable = new AnimationRunnable();
-	private long mAnimationStart;
 	private int mAnimationStep;
 	private ByteBuffer mBufferQuad;
 	private Context mContext;
@@ -52,6 +52,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	private final CubismFbo mFboBloom = new CubismFbo();
 	private final CubismFbo mFboMain = new CubismFbo();
 	private final CubismFbo mFboShadowMap = new CubismFbo();
+	private MediaPlayer mMediaPlayer;
 	private final CubismShader mShaderBloom1 = new CubismShader();
 	private final CubismShader mShaderBloom2 = new CubismShader();
 	private final CubismShader mShaderBloom3 = new CubismShader();
@@ -61,7 +62,8 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	private final CubismCube mSkybox = new CubismCube();
 	private int mWidth, mHeight;
 
-	public CubismRenderer(Context context) {
+	public CubismRenderer(Context context, MediaPlayer mediaPlayer) {
+		mMediaPlayer = mediaPlayer;
 		mContext = context;
 
 		// Create full scene quad buffer.
@@ -136,8 +138,11 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 	 * Calculates scene animation.
 	 */
 	private void onAnimateScene() {
-		long time = SystemClock.uptimeMillis();
-		long timeDiff = time - mAnimationStart;
+		long musicPos = mMediaPlayer.getCurrentPosition();
+		if (musicPos < mAnimationPos) {
+			mAnimationStep = 1;
+		}
+		mAnimationPos = musicPos;
 
 		/**
 		 * Camera and light movement.
@@ -182,13 +187,13 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 							: 1;
 				}
 			});
-			mAnimationStart = time;
+
 			mAnimationStep = 2;
 			break;
 		}
 		case 2: {
-			if (timeDiff < 7600) {
-				tCamera = timeDiff / 7600f;
+			if (mAnimationPos < 7600) {
+				tCamera = mAnimationPos / 7600f;
 				tCamera = tCamera * tCamera * (3 - 2 * tCamera);
 				break;
 			}
@@ -210,7 +215,7 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 			mAnimationStep = 3;
 		}
 		case 3: {
-			tCamera = (timeDiff - 7600) / (11200f - 7600f);
+			tCamera = (mAnimationPos - 7600) / (11200f - 7600f);
 			tCamera = tCamera * tCamera * (3 - 2 * tCamera);
 			break;
 		}
@@ -232,10 +237,10 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		 * Big cube "explosion".
 		 */
 		float tExplode = 0f;
-		if (timeDiff > 2000 && timeDiff <= 9000) {
-			tExplode = (timeDiff - 2000) / 7000f;
-		} else if (timeDiff > 9000) {
-			tExplode = 1f - (timeDiff - 9000) / 2200f;
+		if (mAnimationPos > 2000 && mAnimationPos <= 9000) {
+			tExplode = (mAnimationPos - 2000) / 7000f;
+		} else if (mAnimationPos > 9000) {
+			tExplode = 1f - (mAnimationPos - 9000) / 2200f;
 		}
 		if (tExplode > 1)
 			tExplode = 1;
@@ -333,10 +338,6 @@ public class CubismRenderer implements GLSurfaceView.Renderer {
 		synchronized (mAnimationRunnable.mLock) {
 			mAnimationRunnable.mLock.notifyAll();
 		}
-	}
-
-	public void onMusicRepeat() {
-		mAnimationStep = 1;
 	}
 
 	public void onPause() {

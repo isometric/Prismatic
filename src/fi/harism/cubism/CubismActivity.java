@@ -40,25 +40,17 @@ public class CubismActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 
+		// Create media player object.
+		mMediaPlayer = MediaPlayer.create(this, R.raw.loop);
+		mMediaPlayer.setLooping(true);
+
 		// Create GLSurfaceView.
-		mRenderer = new CubismRenderer(this);
+		mRenderer = new CubismRenderer(this, mMediaPlayer);
 		mGLSurfaceView = new GLSurfaceView(this);
 		mGLSurfaceView.setEGLContextClientVersion(2);
 		mGLSurfaceView.setRenderer(mRenderer);
 		mGLSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 		setContentView(mGLSurfaceView);
-
-		// Create media player object.
-		mMediaPlayer = MediaPlayer.create(this, R.raw.loop);
-		mMediaPlayer.setLooping(true);
-		mMediaPlayer
-				.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
-					@Override
-					public void onSeekComplete(MediaPlayer arg0) {
-						// Tell renderer music is looping from the start.
-						mRenderer.onMusicRepeat();
-					}
-				});
 	}
 
 	@Override
