@@ -29,7 +29,8 @@ void main() {
 	gl_FragColor = vec4(uColor * (0.4 + diffuse + specular), 1.0);
 	
 	const float linearDepthConstant = 1.0 / (40.0 - 0.1);
-	vec3 lightVec = normalize(uLightPos - vPositionModel.xyz);
+	vec3 lightVec = normalize(vPositionModel.xyz - uLightPos);
+	lightVec.y = -lightVec.y;
 	lightVec.z = -lightVec.z;
 	float depth = length(vPositionModel.xyz - uLightPos) * linearDepthConstant;
 	//depth *= 0.98;

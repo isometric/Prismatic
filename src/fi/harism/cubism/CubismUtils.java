@@ -21,10 +21,22 @@ import android.util.FloatMath;
 
 public final class CubismUtils {
 
-	public static void interpolateV(float[] out, float[] src, float[] dst,
-			float t) {
-		for (int i = 0; i < 3; ++i) {
-			out[i] = src[i] + (dst[i] - src[i]) * t;
+	public static void interpolateV(float[] out, float[] p0, float[] p1, float t) {
+		int len = Math.min(p0.length, p1.length);
+		len = Math.min(len, out.length);
+		for (int i = 0; i < len; ++i) {
+			out[i] = p0[i] + (p1[i] - p0[i]) * t;
+		}
+	}
+
+	public static void interpolateV(float[] out, float[] p0, float[] p1,
+			float[] p2, float t) {
+		int len = Math.min(p0.length, p1.length);
+		len = Math.min(len, p2.length);
+		len = Math.min(len, out.length);
+		for (int i = 0; i < len; ++i) {
+			out[i] = (1.0f - t) * (1.0f - t) * p0[i] + 2.0f * (1.0f - t) * t
+					* p1[i] + t * t * p2[i];
 		}
 	}
 

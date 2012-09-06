@@ -23,8 +23,10 @@ import android.opengl.Matrix;
 public class CubismCube {
 
 	private static ByteBuffer mBufferNormals;
+
 	private static ByteBuffer mBufferNormalsInv;
 	private static ByteBuffer mBufferVertices;
+	private static final float SQRT_2 = 1.41421356237f;
 
 	static {
 		// Vertex and normal data plus indices arrays.
@@ -81,6 +83,7 @@ public class CubismCube {
 		Matrix.setIdentityM(mMatrixScale, 0);
 		Matrix.setIdentityM(mMatrixTranslate, 0);
 		Matrix.setIdentityM(mMatrixModel, 0);
+		mBoundingSphere[3] = SQRT_2;
 	}
 
 	public float[] getBoundingSphere() {
@@ -116,7 +119,7 @@ public class CubismCube {
 	public void setScale(float scale) {
 		Matrix.setIdentityM(mMatrixScale, 0);
 		Matrix.scaleM(mMatrixScale, 0, scale, scale, scale);
-		mBoundingSphere[3] = 1.41421356237f * scale;
+		mBoundingSphere[3] = SQRT_2 * scale;
 		mRecalculate = true;
 	}
 

@@ -24,6 +24,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.content.Context;
+import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
@@ -37,14 +38,21 @@ public final class CubismRenderer implements GLSurfaceView.Renderer {
 	private final AnimationRunnable mAnimationRunnable = new AnimationRunnable();
 	private ByteBuffer mBufferQuad;
 	private Context mContext;
-	private final CubismFbo mFboBloom = new CubismFbo();
-	private final CubismFbo mFboMain = new CubismFbo();
-	private final CubismFbo mFboShadowMap = new CubismFbo();
-	private final float[] mMatrixLightPerspective = new float[16];
-	private final float[] mMatrixPerspective = new float[16];
+	private final CubismFbo mFboDepthMap = new CubismFbo();
+	private final CubismFbo mFboFull = new CubismFbo();
+	private final CubismFbo mFboQuarter = new CubismFbo();
+	private int mInitCounter;
+	private final float[] mMatrixProjection = new float[16];
+	private final float[] mMatrixProjectionLight = new float[16];
+	private final float[] mMatrixRotate = new float[16];
+	private final float[] mMatrixView = new float[16];
+	private final float[] mMatrixViewLight = new float[16];
+	private final float[] mMatrixViewProj = new float[16];
 	private MediaPlayer mMediaPlayer;
+	private final Model[] mModels;
+	private CubismParser mParser;
+	private final CubismParser.Data mParserData = new CubismParser.Data();
 	private final float[] mPlanes = new float[24];
-	private final CubismScene mScene = new CubismScene();
 	private final CubismShader mShaderBloom1 = new CubismShader();
 	private final CubismShader mShaderBloom2 = new CubismShader();
 	private final CubismShader mShaderBloom3 = new CubismShader();
@@ -54,16 +62,31 @@ public final class CubismRenderer implements GLSurfaceView.Renderer {
 	private final CubismCube mSkybox = new CubismCube();
 	private int mWidth, mHeight;
 
-	public CubismRenderer(Context context, MediaPlayer mediaPlayer) {
-		mMediaPlayer = mediaPlayer;
+	public CubismRenderer(Context context, CubismParser parser,
+			MediaPlayer mediaPlayer) {
 		mContext = context;
+		mParser = parser;
+		mMediaPlayer = mediaPlayer;
 
 		// Create full scene quad buffer.
 		final byte FULL_QUAD_COORDS[] = { -1, 1, -1, -1, 1, 1, 1, -1 };
 		mBufferQuad = ByteBuffer.allocateDirect(4 * 2);
 		mBufferQuad.put(FULL_QUAD_COORDS).position(0);
 
-		mSkybox.setScale(-6f);
+		mSkybox.setScale(-10f);
+
+		mModels = new Model[7];
+		mModels[0] = new CubismModelBasic();
+		mModels[1] = new CubismModelExplosion();
+		mModels[2] = new CubismModelRandom();
+		mModels[3] = new CubismModelBitmap(BitmapFactory.decodeStream(mContext
+				.getResources().openRawResource(R.raw.img_cubism)));
+		mModels[4] = new CubismModelBitmap(BitmapFactory.decodeStream(mContext
+				.getResources().openRawResource(R.raw.img_harism)));
+		mModels[5] = new CubismModelBitmap(BitmapFactory.decodeStream(mContext
+				.getResources().openRawResource(R.raw.img_heart)));
+		mModels[6] = new CubismModelBitmap(BitmapFactory.decodeStream(mContext
+				.getResources().openRawResource(R.raw.img_jinny)));
 	}
 
 	/**
@@ -82,58 +105,116 @@ public final class CubismRenderer implements GLSurfaceView.Renderer {
 
 	@Override
 	public void onDrawFrame(GL10 unused) {
-		if (mAnimationRunnable.mRunning) {
-			synchronized (mAnimationRunnable.mLock) {
-				try {
-					mAnimationRunnable.mLock.wait();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+
+		/**
+		 * Initialize OpenGL context.
+		 */
+		switch (mInitCounter) {
+		case 0: {
+			// Check if shader compiler is supported.
+			GLES20.glGetBooleanv(GLES20.GL_SHADER_COMPILER,
+					mShaderCompilerSupport, 0);
+
+			// If not, show user an error message and return immediately.
+			if (!mShaderCompilerSupport[0]) {
+				String msg = mContext.getString(R.string.error_shader_compiler);
+				showError(msg);
 			}
 		}
+		case 1: {
+			GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+			if (!mShaderCompilerSupport[0]) {
+				mInitCounter = 1;
+				return;
+			}
+			mInitCounter = 2;
+			return;
+		}
+		case 2: {
 
-		final float[] viewRotationM = new float[16];
+			// Load vertex and fragment shaders.
+			try {
+				String vertexSource, fragmentSource;
+				vertexSource = loadRawString(R.raw.main_vs);
+				fragmentSource = loadRawString(R.raw.main_fs);
+				mShaderMain.setProgram(vertexSource, fragmentSource);
+				vertexSource = loadRawString(R.raw.depth_vs);
+				fragmentSource = loadRawString(R.raw.depth_fs);
+				mShaderDepth.setProgram(vertexSource, fragmentSource);
+				vertexSource = loadRawString(R.raw.bloom_vs);
+				fragmentSource = loadRawString(R.raw.bloom_pass1_fs);
+				mShaderBloom1.setProgram(vertexSource, fragmentSource);
+				vertexSource = loadRawString(R.raw.bloom_vs);
+				fragmentSource = loadRawString(R.raw.bloom_pass2_fs);
+				mShaderBloom2.setProgram(vertexSource, fragmentSource);
+				vertexSource = loadRawString(R.raw.bloom_vs);
+				fragmentSource = loadRawString(R.raw.bloom_pass3_fs);
+				mShaderBloom3.setProgram(vertexSource, fragmentSource);
+			} catch (Exception ex) {
+				showError(ex.getMessage());
+			}
+		}
+		case 3: {
+			float aspectR = (float) mWidth / mHeight;
+			CubismUtils.setPerspectiveM(mMatrixProjection, 45f, aspectR, .1f,
+					40f);
+			CubismUtils.setPerspectiveM(mMatrixProjectionLight, 90f, 1f, .1f,
+					40f);
+
+			mFboDepthMap.init(512, 512, GLES20.GL_TEXTURE_CUBE_MAP, 1, true,
+					false);
+			mFboQuarter.init(mWidth / 4, mHeight / 4, 2);
+			mFboFull.init(mWidth, mHeight, GLES20.GL_TEXTURE_2D, 1, true, false);
+
+			mInitCounter = 4;
+		}
+		}
+
+		/**
+		 * Actual scene rendering.
+		 */
 
 		// Render shadow map forward.
-		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0);
+		mFboDepthMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0);
 		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
-		Matrix.setIdentityM(viewRotationM, 0);
-		renderShadowMap(viewRotationM);
+		Matrix.setIdentityM(mMatrixRotate, 0);
+		renderShadowMap(mMatrixRotate);
 
 		// Render shadow map right.
-		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0);
+		mFboDepthMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0);
 		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
-		CubismUtils.setRotateM(viewRotationM, 0f, -90f, 0f);
-		renderShadowMap(viewRotationM);
+		CubismUtils.setRotateM(mMatrixRotate, 0f, 90f, 0f);
+		renderShadowMap(mMatrixRotate);
 
 		// Render shadow map back.
-		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0);
+		mFboDepthMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0);
 		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
-		CubismUtils.setRotateM(viewRotationM, 0f, 180f, 0f);
-		renderShadowMap(viewRotationM);
+		CubismUtils.setRotateM(mMatrixRotate, 0f, 180f, 0f);
+		renderShadowMap(mMatrixRotate);
 
 		// Render shadow map left.
-		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0);
+		mFboDepthMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0);
 		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
-		CubismUtils.setRotateM(viewRotationM, 0f, 90f, 0f);
-		renderShadowMap(viewRotationM);
+		CubismUtils.setRotateM(mMatrixRotate, 0f, -90f, 0f);
+		renderShadowMap(mMatrixRotate);
 
 		// Render shadow map down.
-		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0);
+		mFboDepthMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0);
 		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
-		CubismUtils.setRotateM(viewRotationM, -90f, 0f, 180f);
-		renderShadowMap(viewRotationM);
+		CubismUtils.setRotateM(mMatrixRotate, 90f, 0f, 0f);
+		renderShadowMap(mMatrixRotate);
 
 		// Render shadow map up.
-		mFboShadowMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0);
+		mFboDepthMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0);
 		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
-		CubismUtils.setRotateM(viewRotationM, 90f, 0f, 180f);
-		renderShadowMap(viewRotationM);
+		CubismUtils.setRotateM(mMatrixRotate, -90f, 0f, 0f);
+		renderShadowMap(mMatrixRotate);
 
 		// Render final scene.
 		boolean renderBloom = true;
 		if (renderBloom) {
-			mFboMain.bindTexture(GLES20.GL_TEXTURE_2D, 0);
+			mFboFull.bindTexture(GLES20.GL_TEXTURE_2D, 0);
 			GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
 			renderCombine();
 			renderBloom();
@@ -168,51 +249,14 @@ public final class CubismRenderer implements GLSurfaceView.Renderer {
 		mWidth = width;
 		mHeight = height;
 
-		float aspectR = (float) mWidth / mHeight;
-		CubismUtils.setPerspectiveM(mMatrixPerspective, 45f, aspectR, .1f, 40f);
-		CubismUtils.setPerspectiveM(mMatrixLightPerspective, 90f, 1f, .1f, 40f);
-
-		mFboShadowMap
-				.init(512, 512, GLES20.GL_TEXTURE_CUBE_MAP, 1, true, false);
-		mFboBloom.init(mWidth / 4, mHeight / 4, 2);
-		mFboMain.init(mWidth, mHeight, GLES20.GL_TEXTURE_2D, 1, true, false);
+		if (mInitCounter > 3) {
+			mInitCounter = 3;
+		}
 	}
 
 	@Override
 	public void onSurfaceCreated(GL10 unused, EGLConfig config) {
-		// Check if shader compiler is supported.
-		GLES20.glGetBooleanv(GLES20.GL_SHADER_COMPILER, mShaderCompilerSupport,
-				0);
-
-		// If not, show user an error message and return immediately.
-		if (mShaderCompilerSupport[0] == false) {
-			String msg = mContext.getString(R.string.error_shader_compiler);
-			showError(msg);
-			return;
-		}
-
-		// Load vertex and fragment shaders.
-		try {
-			String vertexSource, fragmentSource;
-			vertexSource = loadRawString(R.raw.main_vs);
-			fragmentSource = loadRawString(R.raw.main_fs);
-			mShaderMain.setProgram(vertexSource, fragmentSource);
-			vertexSource = loadRawString(R.raw.depth_vs);
-			fragmentSource = loadRawString(R.raw.depth_fs);
-			mShaderDepth.setProgram(vertexSource, fragmentSource);
-			vertexSource = loadRawString(R.raw.bloom_vs);
-			fragmentSource = loadRawString(R.raw.bloom_pass1_fs);
-			mShaderBloom1.setProgram(vertexSource, fragmentSource);
-			vertexSource = loadRawString(R.raw.bloom_vs);
-			fragmentSource = loadRawString(R.raw.bloom_pass2_fs);
-			mShaderBloom2.setProgram(vertexSource, fragmentSource);
-			vertexSource = loadRawString(R.raw.bloom_vs);
-			fragmentSource = loadRawString(R.raw.bloom_pass3_fs);
-			mShaderBloom3.setProgram(vertexSource, fragmentSource);
-		} catch (Exception ex) {
-			showError(ex.getMessage());
-		}
-
+		mInitCounter = 0;
 	}
 
 	private void renderBloom() {
@@ -221,12 +265,12 @@ public final class CubismRenderer implements GLSurfaceView.Renderer {
 		 */
 
 		// Pixel sizes.
-		float blurSizeH = 1f / mFboBloom.getWidth();
-		float blurSizeV = 1f / mFboBloom.getHeight();
+		float blurSizeH = 1f / mFboQuarter.getWidth();
+		float blurSizeV = 1f / mFboQuarter.getHeight();
 
 		// Calculate number of pixels from relative size.
 		int numBlurPixelsPerSide = (int) (0.05f * Math.min(
-				mFboBloom.getWidth(), mFboBloom.getHeight()));
+				mFboQuarter.getWidth(), mFboQuarter.getHeight()));
 		if (numBlurPixelsPerSide < 1)
 			numBlurPixelsPerSide = 1;
 		double sigma = 1.0 + numBlurPixelsPerSide * 0.5;
@@ -243,11 +287,11 @@ public final class CubismRenderer implements GLSurfaceView.Renderer {
 		 * First pass, blur texture horizontally.
 		 */
 
-		mFboBloom.bindTexture(GLES20.GL_TEXTURE_2D, 0);
+		mFboQuarter.bindTexture(GLES20.GL_TEXTURE_2D, 0);
 		mShaderBloom1.useProgram();
 
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFboMain.getTexture(0));
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFboFull.getTexture(0));
 		GLES20.glUniform3f(mShaderBloom1.getHandle("uIncrementalGaussian"),
 				(float) incrementalGaussian1, (float) incrementalGaussian2,
 				(float) incrementalGaussian3);
@@ -264,11 +308,11 @@ public final class CubismRenderer implements GLSurfaceView.Renderer {
 		/**
 		 * Second pass, blur texture vertically.
 		 */
-		mFboBloom.bindTexture(GLES20.GL_TEXTURE_2D, 1);
+		mFboQuarter.bindTexture(GLES20.GL_TEXTURE_2D, 1);
 		mShaderBloom2.useProgram();
 
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFboBloom.getTexture(0));
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFboQuarter.getTexture(0));
 		GLES20.glUniform3f(mShaderBloom2.getHandle("uIncrementalGaussian"),
 				(float) incrementalGaussian1, (float) incrementalGaussian2,
 				(float) incrementalGaussian3);
@@ -293,11 +337,13 @@ public final class CubismRenderer implements GLSurfaceView.Renderer {
 		mShaderBloom3.useProgram();
 
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFboBloom.getTexture(1));
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFboQuarter.getTexture(1));
 		GLES20.glUniform1i(mShaderBloom3.getHandle("sTextureBloom"), 0);
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFboMain.getTexture(0));
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFboFull.getTexture(0));
 		GLES20.glUniform1i(mShaderBloom3.getHandle("sTextureSource"), 1);
+		GLES20.glUniform4fv(mShaderBloom3.getHandle("uForegroundColor"), 1,
+				mParserData.mForegroundColor, 0);
 
 		GLES20.glVertexAttribPointer(mShaderBloom3.getHandle("aPosition"), 2,
 				GLES20.GL_BYTE, false, 0, mBufferQuad);
@@ -316,7 +362,7 @@ public final class CubismRenderer implements GLSurfaceView.Renderer {
 		int aPosition = mShaderMain.getHandle("aPosition");
 		int aNormal = mShaderMain.getHandle("aNormal");
 
-		GLES20.glUniform3fv(uLightPos, 1, mScene.getLightPosition(), 0);
+		GLES20.glUniform3fv(uLightPos, 1, mParserData.mLightPosition, 0);
 
 		GLES20.glVertexAttribPointer(aPosition, 3, GLES20.GL_BYTE, false, 0,
 				CubismCube.getVertices());
@@ -328,23 +374,22 @@ public final class CubismRenderer implements GLSurfaceView.Renderer {
 
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_CUBE_MAP,
-				mFboShadowMap.getTexture(0));
+				mFboDepthMap.getTexture(0));
 
 		GLES20.glEnable(GLES20.GL_CULL_FACE);
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
-		GLES20.glUniformMatrix4fv(uViewM, 1, false, mScene.getViewM(), 0);
-		GLES20.glUniformMatrix4fv(uProjM, 1, false, mMatrixPerspective, 0);
+		GLES20.glUniformMatrix4fv(uViewM, 1, false, mMatrixView, 0);
+		GLES20.glUniformMatrix4fv(uProjM, 1, false, mMatrixProjection, 0);
 
 		GLES20.glUniform3f(uColor, .4f, .6f, 1f);
 
-		final float[] viewProjM = new float[16];
-		Matrix.multiplyMM(viewProjM, 0, mMatrixPerspective, 0,
-				mScene.getViewM(), 0);
+		Matrix.multiplyMM(mMatrixViewProj, 0, mMatrixProjection, 0,
+				mMatrixView, 0);
 
-		CubismVisibility.extractPlanes(viewProjM, mPlanes);
+		CubismVisibility.extractPlanes(mMatrixViewProj, mPlanes);
 
-		CubismCube[] cubes = mScene.getCubes();
+		CubismCube[] cubes = mModels[mParserData.mModelId].getCubes();
 		for (int i = 0; i < cubes.length; ++i) {
 			if (CubismVisibility.intersects(mPlanes,
 					cubes[i].getBoundingSphere())) {
@@ -375,14 +420,11 @@ public final class CubismRenderer implements GLSurfaceView.Renderer {
 		int uProjM = mShaderDepth.getHandle("uProjM");
 		int aPosition = mShaderDepth.getHandle("aPosition");
 
-		final float[] viewM = new float[16];
-		final float[] viewProjM = new float[16];
+		Matrix.multiplyMM(mMatrixViewProj, 0, viewRotateM, 0, mMatrixViewLight,
+				0);
 
-		Matrix.multiplyMM(viewM, 0, viewRotateM, 0, mScene.getLightViewM(), 0);
-		Matrix.multiplyMM(viewProjM, 0, mMatrixLightPerspective, 0, viewM, 0);
-
-		GLES20.glUniformMatrix4fv(uViewM, 1, false, viewM, 0);
-		GLES20.glUniformMatrix4fv(uProjM, 1, false, mMatrixLightPerspective, 0);
+		GLES20.glUniformMatrix4fv(uViewM, 1, false, mMatrixViewProj, 0);
+		GLES20.glUniformMatrix4fv(uProjM, 1, false, mMatrixProjectionLight, 0);
 
 		GLES20.glVertexAttribPointer(aPosition, 3, GLES20.GL_BYTE, false, 0,
 				CubismCube.getVertices());
@@ -391,9 +433,11 @@ public final class CubismRenderer implements GLSurfaceView.Renderer {
 		GLES20.glEnable(GLES20.GL_CULL_FACE);
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
-		CubismVisibility.extractPlanes(viewProjM, mPlanes);
+		Matrix.multiplyMM(mMatrixViewProj, 0, mMatrixProjectionLight, 0,
+				mMatrixViewProj, 0);
+		CubismVisibility.extractPlanes(mMatrixViewProj, mPlanes);
 
-		CubismCube[] cubes = mScene.getCubes();
+		CubismCube[] cubes = mModels[mParserData.mModelId].getCubes();
 		for (int i = 0; i < cubes.length; ++i) {
 			if (CubismVisibility.intersects(mPlanes,
 					cubes[i].getBoundingSphere())) {
@@ -432,7 +476,20 @@ public final class CubismRenderer implements GLSurfaceView.Renderer {
 		public void run() {
 			while (!mStop) {
 				mRunning = true;
-				mScene.animate(mMediaPlayer.getCurrentPosition() / 1000f);
+
+				mParser.interpolate(mParserData,
+						mMediaPlayer.getCurrentPosition() / 1000f);
+				mModels[mParserData.mModelId].interpolate(mParserData.mModelT);
+
+				final float[] pos = mParserData.mCameraPosition;
+				final float[] la = mParserData.mCameraLookAt;
+				final float[] lpos = mParserData.mLightPosition;
+				Matrix.setLookAtM(mMatrixView, 0, pos[0], pos[1], pos[2],
+						la[0], la[1], la[2], 0f, 1f, 0f);
+				Matrix.setIdentityM(mMatrixViewLight, 0);
+				Matrix.translateM(mMatrixViewLight, 0, -lpos[0], -lpos[1],
+						-lpos[2]);
+
 				mRunning = false;
 				synchronized (mLock) {
 					try {
@@ -445,6 +502,12 @@ public final class CubismRenderer implements GLSurfaceView.Renderer {
 			}
 		}
 
+	}
+
+	public interface Model {
+		public CubismCube[] getCubes();
+
+		public void interpolate(float t);
 	}
 
 }
