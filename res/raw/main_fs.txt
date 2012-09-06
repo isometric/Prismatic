@@ -21,10 +21,10 @@ void main() {
 	vec3 L = normalize(lightDir);		
 	float lambert = dot(N, L);
 	if (lambert > 0.0) {
-		diffuse = lambert * 1.0;
+		diffuse = lambert * 0.7;
 		vec3 R = reflect(-L, N);
 		vec3 E = normalize(-vPositionView.xyz);
-		specular = pow(max(dot(R, E), 0.0), 32.0) * 0.5;
+		specular = pow(max(dot(R, E), 0.0), 32.0) * 0.3;
 	}
 	gl_FragColor = vec4(uColor * (0.4 + diffuse + specular), 1.0);
 	
@@ -33,7 +33,6 @@ void main() {
 	lightVec.y = -lightVec.y;
 	lightVec.z = -lightVec.z;
 	float depth = length(vPositionModel.xyz - uLightPos) * linearDepthConstant;
-	//depth *= 0.98;
 	
 	const float c = 8.0;
 	vec4 texel = textureCube(sShadowMap, lightVec);

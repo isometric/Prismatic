@@ -3,7 +3,7 @@ Introduction
 
 Shortish example application on OpenGL ES 2.0. Contains;
 
- * 489 animated cubes.
+ * 489 animated cubes at max.
  * Per pixel phong lightning.
  * Shadow cube maps.
 
