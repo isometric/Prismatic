@@ -474,7 +474,6 @@ public final class CubismRenderer implements GLSurfaceView.Renderer {
 		@Override
 		public void run() {
 			while (!mStop) {
-
 				mParser.interpolate(mParserData,
 						mMediaPlayer.getCurrentPosition() / 1000f);
 				mModels[mParserData.mModelId].interpolate(mParserData.mModelT);
