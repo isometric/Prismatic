@@ -469,13 +469,11 @@ public final class CubismRenderer implements GLSurfaceView.Renderer {
 	private class AnimationRunnable implements Runnable {
 
 		private Object mLock = new Object();
-		private boolean mRunning;
 		private boolean mStop;
 
 		@Override
 		public void run() {
 			while (!mStop) {
-				mRunning = true;
 
 				mParser.interpolate(mParserData,
 						mMediaPlayer.getCurrentPosition() / 1000f);
@@ -490,7 +488,6 @@ public final class CubismRenderer implements GLSurfaceView.Renderer {
 				Matrix.translateM(mMatrixViewLight, 0, -lpos[0], -lpos[1],
 						-lpos[2]);
 
-				mRunning = false;
 				synchronized (mLock) {
 					try {
 						mLock.notifyAll();
