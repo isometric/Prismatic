@@ -69,7 +69,12 @@ public class CubismModelRandom implements CubismRenderer.Model {
 	}
 
 	@Override
-	public void interpolate(float t) {
+	public int getRenderMode() {
+		return MODE_SHADOWMAP;
+	}
+
+	@Override
+	public void setInterpolation(float t) {
 		for (int i = 0; i < mCubes.length; ++i) {
 			Cube cube = mCubes[i];
 

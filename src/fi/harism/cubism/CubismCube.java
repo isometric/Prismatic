@@ -23,7 +23,6 @@ import android.opengl.Matrix;
 public class CubismCube {
 
 	private static ByteBuffer mBufferNormals;
-
 	private static ByteBuffer mBufferNormalsInv;
 	private static ByteBuffer mBufferVertices;
 	private static final float SQRT_2 = 1.41421356237f;
@@ -74,7 +73,9 @@ public class CubismCube {
 	private final float[] mColor = new float[3];
 	private final float[] mMatrixModel = new float[16];
 	private final float[] mMatrixRotate = new float[16];
+
 	private final float[] mMatrixScale = new float[16];
+
 	private final float[] mMatrixTranslate = new float[16];
 	private boolean mRecalculate;
 

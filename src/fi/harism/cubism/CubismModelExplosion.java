@@ -95,7 +95,12 @@ public class CubismModelExplosion implements CubismRenderer.Model {
 	}
 
 	@Override
-	public void interpolate(float t) {
+	public int getRenderMode() {
+		return MODE_SHADOWMAP;
+	}
+
+	@Override
+	public void setInterpolation(float t) {
 		for (int i = 0; i < mCubes.length; ++i) {
 			float tt = t * (1f - (float) i / mCubes.length);
 			tt = tt * tt * (3 - 2 * tt);

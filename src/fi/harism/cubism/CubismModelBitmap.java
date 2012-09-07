@@ -127,7 +127,12 @@ public class CubismModelBitmap implements CubismRenderer.Model {
 	}
 
 	@Override
-	public void interpolate(float t) {
+	public int getRenderMode() {
+		return MODE_SHADOWMAP;
+	}
+
+	@Override
+	public void setInterpolation(float t) {
 		for (Cube cube : mCubes) {
 			float scale = cube.mScaleSource
 					+ (cube.mScaleTarget - cube.mScaleSource) * t;

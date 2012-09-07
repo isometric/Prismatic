@@ -19,7 +19,6 @@ package fi.harism.cubism;
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.media.MediaPlayer;
-import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
@@ -28,7 +27,6 @@ import android.widget.Toast;
 
 public class CubismActivity extends Activity {
 
-	private GLSurfaceView mGLSurfaceView;
 	private MediaPlayer mMediaPlayer;
 	private CubismRenderer mRenderer;
 
@@ -66,14 +64,9 @@ public class CubismActivity extends Activity {
 
 		// Create GLSurfaceView.
 		mRenderer = new CubismRenderer(this, parser, mMediaPlayer);
-		mGLSurfaceView = new GLSurfaceView(this);
-		mGLSurfaceView.setEGLContextClientVersion(2);
-		mGLSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 0, 0);
-		mGLSurfaceView.setRenderer(mRenderer);
-		mGLSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-		setContentView(mGLSurfaceView);
+		setContentView(mRenderer);
 
-		mGLSurfaceView.setOnTouchListener(new View.OnTouchListener() {
+		mRenderer.setOnTouchListener(new View.OnTouchListener() {
 			float mPositionX;
 
 			@Override
@@ -108,7 +101,6 @@ public class CubismActivity extends Activity {
 	@Override
 	public void onPause() {
 		super.onPause();
-		mGLSurfaceView.onPause();
 		mRenderer.onPause();
 		mMediaPlayer.pause();
 	}
@@ -116,7 +108,6 @@ public class CubismActivity extends Activity {
 	@Override
 	public void onResume() {
 		super.onResume();
-		mGLSurfaceView.onResume();
 		mRenderer.onResume();
 		mMediaPlayer.start();
 	}

@@ -26,7 +26,12 @@ public class CubismModelBasic implements CubismRenderer.Model {
 	}
 
 	@Override
-	public void interpolate(float t) {
+	public int getRenderMode() {
+		return MODE_SHADOWMAP;
+	}
+
+	@Override
+	public void setInterpolation(float t) {
 	}
 
 }
