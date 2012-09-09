@@ -43,6 +43,7 @@ public final class CubismRenderer extends GLSurfaceView implements
 	private final CubismFbo mFboFull = new CubismFbo();
 	private final CubismFbo mFboQuarter = new CubismFbo();
 	private int mInitCounter;
+	private final float[] mMatrixExtrude = new float[16];
 	private final float[] mMatrixProjection = new float[16];
 	private final float[] mMatrixProjectionLight = new float[16];
 	private final float[] mMatrixRotate = new float[16];
@@ -61,7 +62,6 @@ public final class CubismRenderer extends GLSurfaceView implements
 	private final CubismShader mShaderDefault = new CubismShader();
 	private final CubismShader mShaderDepth = new CubismShader();
 	private final CubismShader mShaderShadowMap = new CubismShader();
-	private final CubismShader mShaderStencil = new CubismShader();
 	private final CubismCube mSkybox = new CubismCube();
 	private int mWidth, mHeight;
 
@@ -157,9 +157,6 @@ public final class CubismRenderer extends GLSurfaceView implements
 				vertexSource = loadRawString(R.raw.depth_vs);
 				fragmentSource = loadRawString(R.raw.depth_fs);
 				mShaderDepth.setProgram(vertexSource, fragmentSource);
-				vertexSource = loadRawString(R.raw.stencil_vs);
-				fragmentSource = loadRawString(R.raw.stencil_fs);
-				mShaderStencil.setProgram(vertexSource, fragmentSource);
 				vertexSource = loadRawString(R.raw.bloom_vs);
 				fragmentSource = loadRawString(R.raw.bloom_pass1_fs);
 				mShaderBloom1.setProgram(vertexSource, fragmentSource);
@@ -179,6 +176,7 @@ public final class CubismRenderer extends GLSurfaceView implements
 					40f);
 			CubismUtils.setPerspectiveM(mMatrixProjectionLight, 90f, 1f, .1f,
 					40f);
+			CubismUtils.setExtrudeM(mMatrixExtrude, 45f, aspectR, .1f);
 
 			mFboDepthMap.init(512, 512, GLES20.GL_TEXTURE_CUBE_MAP, 1, true,
 					false);
@@ -506,7 +504,6 @@ public final class CubismRenderer extends GLSurfaceView implements
 	public interface Model {
 		public static final int MODE_REFLECTION = 0;
 		public static final int MODE_SHADOWMAP = 1;
-		public static final int MODE_SHADOWVOLUME = 2;
 
 		public CubismCube[] getCubes();
 

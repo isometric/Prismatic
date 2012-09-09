@@ -77,6 +77,31 @@ public final class CubismUtils {
 		dst[11] = -(src[8] * src[12] + src[9] * src[13] + src[10] * src[14]);
 	}
 
+	public static void setExtrudeM(float[] m, float fovy, float aspect,
+			float zNear) {
+
+		Matrix.setIdentityM(m, 0);
+		float h = zNear * (float) Math.tan(fovy * Math.PI / 360);
+		float w = h * aspect;
+
+		m[0] = zNear / w;
+		m[5] = zNear / h;
+		// m[10] = 1.0f - 0.01f;
+		// m[11] = zNear * (0.01f - 1.0f);
+		// m[14] = 1;
+		m[10] = 0.001f - 1;
+		m[11] = -1;
+		m[14] = zNear * (0.001f - 2);
+		m[15] = 0;
+
+		/*
+		 * m[0] = (float)Math.atan(fovy * aspect * Math.PI / 360); m[5] =
+		 * (float)Math.atan(fovy * Math.PI / 360); m[10] = 1 - 0.001f; m[11] =
+		 * zNear * (0.001f - 1); m[14] = 1; m[15] = 0;
+		 */
+
+	}
+
 	/**
 	 * Initializes given matrix as perspective projection matrix.
 	 * 

@@ -34,17 +34,19 @@ public class CubismCube {
 				{ 1, 1, -1 }, { 1, -1, -1 } };
 		final byte[][] CUBENORMALS = { { 0, 0, 1 }, { 0, 0, -1 }, { -1, 0, 0 },
 				{ 1, 0, 0 }, { 0, 1, 0 }, { 0, -1, 0 } };
-		final int[][][] CUBEFILLED = { { { 0, 1, 2, 1, 3, 2 }, { 0 }, { 1 } },
-				{ { 6, 7, 4, 7, 5, 4 }, { 1 }, { 0 } },
-				{ { 0, 4, 1, 4, 5, 1 }, { 2 }, { 3 } },
-				{ { 3, 7, 2, 7, 6, 2 }, { 3 }, { 2 } },
-				{ { 4, 0, 6, 0, 2, 6 }, { 4 }, { 5 } },
-				{ { 1, 5, 3, 5, 7, 3 }, { 5 }, { 4 } } };
+		final int[][][] CUBEFILLED = {
+				{ { 0, 1, 2, 1, 3, 2 }, { 0 }, { 1 }, { 0, 1, 3, 2 } },
+				{ { 6, 7, 4, 7, 5, 4 }, { 1 }, { 0 }, { 6, 7, 5, 4 } },
+				{ { 0, 4, 1, 4, 5, 1 }, { 2 }, { 3 }, { 0, 4, 5, 1 } },
+				{ { 3, 7, 2, 7, 6, 2 }, { 3 }, { 2 }, { 3, 7, 6, 2 } },
+				{ { 4, 0, 6, 0, 2, 6 }, { 4 }, { 5 }, { 4, 0, 2, 6 } },
+				{ { 1, 5, 3, 5, 7, 3 }, { 5 }, { 4 }, { 1, 5, 7, 3 } } };
 
-		// Generate cube buffer.
 		mBufferVertices = ByteBuffer.allocateDirect(3 * 6 * 6);
 		mBufferNormals = ByteBuffer.allocateDirect(3 * 6 * 6);
 		mBufferNormalsInv = ByteBuffer.allocateDirect(3 * 6 * 6);
+
+		final byte C = 1, P = 0;
 		for (int i = 0; i < CUBEFILLED.length; ++i) {
 			for (int j = 0; j < CUBEFILLED[i][0].length; ++j) {
 				mBufferVertices.put(CUBEVERTICES[CUBEFILLED[i][0][j]]);
@@ -52,6 +54,10 @@ public class CubismCube {
 				mBufferNormalsInv.put(CUBENORMALS[CUBEFILLED[i][2][0]]);
 			}
 		}
+		mBufferVertices.position(0);
+		mBufferNormals.position(0);
+		mBufferNormalsInv.position(0);
+
 		mBufferVertices.position(0);
 		mBufferNormals.position(0);
 		mBufferNormalsInv.position(0);
@@ -73,9 +79,7 @@ public class CubismCube {
 	private final float[] mColor = new float[3];
 	private final float[] mMatrixModel = new float[16];
 	private final float[] mMatrixRotate = new float[16];
-
 	private final float[] mMatrixScale = new float[16];
-
 	private final float[] mMatrixTranslate = new float[16];
 	private boolean mRecalculate;
 
