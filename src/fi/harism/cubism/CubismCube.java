@@ -24,7 +24,9 @@ public class CubismCube {
 
 	private static ByteBuffer mBufferNormals;
 	private static ByteBuffer mBufferNormalsInv;
+	private static ByteBuffer mBufferNormalsShadow;
 	private static ByteBuffer mBufferVertices;
+	private static ByteBuffer mBufferVerticesShadow;
 	private static final float SQRT_2 = 1.41421356237f;
 
 	static {
@@ -45,6 +47,8 @@ public class CubismCube {
 		mBufferVertices = ByteBuffer.allocateDirect(3 * 6 * 6);
 		mBufferNormals = ByteBuffer.allocateDirect(3 * 6 * 6);
 		mBufferNormalsInv = ByteBuffer.allocateDirect(3 * 6 * 6);
+		mBufferVerticesShadow = ByteBuffer.allocateDirect(4 * 6 * 24);
+		mBufferNormalsShadow = ByteBuffer.allocateDirect(3 * 6 * 24);
 
 		final byte C = 1, P = 0;
 		for (int i = 0; i < CUBEFILLED.length; ++i) {
@@ -52,6 +56,38 @@ public class CubismCube {
 				mBufferVertices.put(CUBEVERTICES[CUBEFILLED[i][0][j]]);
 				mBufferNormals.put(CUBENORMALS[CUBEFILLED[i][1][0]]);
 				mBufferNormalsInv.put(CUBENORMALS[CUBEFILLED[i][2][0]]);
+			}
+
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][0]]).put(C);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][0]]).put(P);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][1]]).put(C);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][0]]).put(P);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][1]]).put(P);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][1]]).put(C);
+
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][1]]).put(C);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][1]]).put(P);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][2]]).put(C);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][1]]).put(P);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][2]]).put(P);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][2]]).put(C);
+
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][2]]).put(C);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][2]]).put(P);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][3]]).put(C);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][2]]).put(P);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][3]]).put(P);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][3]]).put(C);
+
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][3]]).put(C);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][3]]).put(P);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][0]]).put(C);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][3]]).put(P);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][0]]).put(P);
+			mBufferVerticesShadow.put(CUBEVERTICES[CUBEFILLED[i][3][0]]).put(C);
+
+			for (int j = 0; j < 24; ++j) {
+				mBufferNormalsShadow.put(CUBENORMALS[CUBEFILLED[i][1][0]]);
 			}
 		}
 		mBufferVertices.position(0);
@@ -61,6 +97,9 @@ public class CubismCube {
 		mBufferVertices.position(0);
 		mBufferNormals.position(0);
 		mBufferNormalsInv.position(0);
+
+		mBufferVerticesShadow.position(0);
+		mBufferNormalsShadow.position(0);
 	}
 
 	public static ByteBuffer getNormals() {
@@ -71,8 +110,16 @@ public class CubismCube {
 		return mBufferNormalsInv;
 	}
 
+	public static ByteBuffer getNormalsShadow() {
+		return mBufferNormalsShadow;
+	}
+
 	public static ByteBuffer getVertices() {
 		return mBufferVertices;
+	}
+
+	public static ByteBuffer getVerticesShadow() {
+		return mBufferVerticesShadow;
 	}
 
 	private final float[] mBoundingSphere = new float[4];

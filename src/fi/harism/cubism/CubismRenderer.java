@@ -62,6 +62,8 @@ public final class CubismRenderer extends GLSurfaceView implements
 	private final CubismShader mShaderDefault = new CubismShader();
 	private final CubismShader mShaderDepth = new CubismShader();
 	private final CubismShader mShaderShadowMap = new CubismShader();
+	private final CubismShader mShaderStencil = new CubismShader();
+	private final CubismShader mShaderStencilMask = new CubismShader();
 	private final CubismCube mSkybox = new CubismCube();
 	private int mWidth, mHeight;
 
@@ -85,7 +87,7 @@ public final class CubismRenderer extends GLSurfaceView implements
 
 		mSkybox.setScale(-10f);
 
-		mModels = new Model[7];
+		mModels = new Model[8];
 		mModels[0] = new CubismModelBasic();
 		mModels[1] = new CubismModelExplosion();
 		mModels[2] = new CubismModelRandom();
@@ -97,6 +99,7 @@ public final class CubismRenderer extends GLSurfaceView implements
 				.getResources().openRawResource(R.raw.img_heart)));
 		mModels[6] = new CubismModelBitmap(BitmapFactory.decodeStream(mContext
 				.getResources().openRawResource(R.raw.img_jinny)));
+		mModels[7] = new CubismModelExplosionShadowVolume();
 
 		queueEvent(mAnimationRunnable);
 	}
@@ -157,6 +160,12 @@ public final class CubismRenderer extends GLSurfaceView implements
 				vertexSource = loadRawString(R.raw.depth_vs);
 				fragmentSource = loadRawString(R.raw.depth_fs);
 				mShaderDepth.setProgram(vertexSource, fragmentSource);
+				vertexSource = loadRawString(R.raw.stencil_vs);
+				fragmentSource = loadRawString(R.raw.stencil_fs);
+				mShaderStencil.setProgram(vertexSource, fragmentSource);
+				vertexSource = loadRawString(R.raw.stencil_mask_vs);
+				fragmentSource = loadRawString(R.raw.stencil_mask_fs);
+				mShaderStencilMask.setProgram(vertexSource, fragmentSource);
 				vertexSource = loadRawString(R.raw.bloom_vs);
 				fragmentSource = loadRawString(R.raw.bloom_pass1_fs);
 				mShaderBloom1.setProgram(vertexSource, fragmentSource);
@@ -208,6 +217,32 @@ public final class CubismRenderer extends GLSurfaceView implements
 				GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
 				renderScene(true);
 			}
+			break;
+		}
+		case Model.MODE_SHADOWVOLUME: {
+			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+			GLES20.glViewport(0, 0, mWidth, mHeight);
+			GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT
+					| GLES20.GL_STENCIL_BUFFER_BIT);
+			renderScene(false);
+			renderShadowStencil();
+
+			GLES20.glEnable(GLES20.GL_STENCIL_TEST);
+			GLES20.glEnable(GLES20.GL_BLEND);
+			GLES20.glStencilFunc(GLES20.GL_NOTEQUAL, 0x00, 0xFF);
+			GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA,
+					GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
+			mShaderStencilMask.useProgram();
+			GLES20.glVertexAttribPointer(
+					mShaderStencilMask.getHandle("aPosition"), 2,
+					GLES20.GL_BYTE, false, 0, mBufferQuad);
+			GLES20.glEnableVertexAttribArray(mShaderStencilMask
+					.getHandle("aPosition"));
+			GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+
+			GLES20.glDisable(GLES20.GL_STENCIL_TEST);
+			GLES20.glDisable(GLES20.GL_BLEND);
 			break;
 		}
 		}
@@ -471,6 +506,62 @@ public final class CubismRenderer extends GLSurfaceView implements
 		GLES20.glDisable(GLES20.GL_CULL_FACE);
 	}
 
+	public void renderShadowStencil() {
+		mShaderStencil.useProgram();
+		int uModelM = mShaderStencil.getHandle("uModelM");
+		int uViewM = mShaderStencil.getHandle("uViewM");
+		int uProjectionM = mShaderStencil.getHandle("uProjectionM");
+		int uExtrudeM = mShaderStencil.getHandle("uExtrudeM");
+		int uLightPosition = mShaderStencil.getHandle("uLightPosition");
+		int aPosition = mShaderStencil.getHandle("aPosition");
+		int aNormal = mShaderStencil.getHandle("aNormal");
+
+		GLES20.glUniform3fv(uLightPosition, 1, mParserData.mLightPosition, 0);
+
+		GLES20.glVertexAttribPointer(aPosition, 4, GLES20.GL_BYTE, false, 0,
+				CubismCube.getVerticesShadow());
+		GLES20.glEnableVertexAttribArray(aPosition);
+
+		GLES20.glVertexAttribPointer(aNormal, 3, GLES20.GL_BYTE, false, 0,
+				CubismCube.getNormalsShadow());
+		GLES20.glEnableVertexAttribArray(aNormal);
+
+		GLES20.glDisable(GLES20.GL_CULL_FACE);
+		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+		GLES20.glEnable(GLES20.GL_STENCIL_TEST);
+		// GLES20.glEnable(GLES20.GL_BLEND);
+
+		GLES20.glUniformMatrix4fv(uViewM, 1, false, mMatrixView, 0);
+		GLES20.glUniformMatrix4fv(uProjectionM, 1, false, mMatrixProjection, 0);
+		GLES20.glUniformMatrix4fv(uExtrudeM, 1, false, mMatrixExtrude, 0);
+
+		GLES20.glDepthMask(false);
+		GLES20.glColorMask(false, false, false, false);
+		// GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA,
+		// GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
+		GLES20.glStencilFunc(GLES20.GL_ALWAYS, 0x00, 0xFF);
+		GLES20.glStencilOpSeparate(GLES20.GL_FRONT, GLES20.GL_KEEP,
+				GLES20.GL_KEEP, GLES20.GL_INCR_WRAP);
+		GLES20.glStencilOpSeparate(GLES20.GL_BACK, GLES20.GL_KEEP,
+				GLES20.GL_KEEP, GLES20.GL_DECR_WRAP);
+
+		CubismCube[] cubes = mModels[mParserData.mModelId].getCubes();
+		for (int i = 0; i < cubes.length; ++i) {
+			GLES20.glUniformMatrix4fv(uModelM, 1, false, cubes[i].getModelM(),
+					0);
+			GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 24);
+		}
+
+		GLES20.glDepthMask(true);
+		GLES20.glColorMask(true, true, true, true);
+
+		GLES20.glDisable(GLES20.GL_CULL_FACE);
+		GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+		GLES20.glDisable(GLES20.GL_STENCIL_TEST);
+		// GLES20.glDisable(GLES20.GL_BLEND);
+	}
+
 	/**
 	 * Shows Toast on screen with given message.
 	 */
@@ -504,6 +595,7 @@ public final class CubismRenderer extends GLSurfaceView implements
 	public interface Model {
 		public static final int MODE_REFLECTION = 0;
 		public static final int MODE_SHADOWMAP = 1;
+		public static final int MODE_SHADOWVOLUME = 2;
 
 		public CubismCube[] getCubes();
 
