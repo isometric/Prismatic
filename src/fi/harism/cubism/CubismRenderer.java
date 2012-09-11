@@ -77,7 +77,6 @@ public final class CubismRenderer extends GLSurfaceView implements
 		mMediaPlayer = mediaPlayer;
 
 		setEGLContextClientVersion(2);
-		setEGLConfigChooser(8, 8, 8, 8, 0, 0);
 		setRenderer(this);
 		setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 
