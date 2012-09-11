@@ -1,6 +1,6 @@
 
 precision mediump float;
-uniform samplerCube sShadowMap;
+uniform samplerCube sDepthMap;
 uniform vec3 uLightPos;
 uniform vec3 uColor;
 
@@ -32,6 +32,6 @@ void main() {
 	float depth = length(lightDir) * linearDepthConstant;
 	
 	const float c = 8.0;
-	vec4 texel = textureCube(sShadowMap, -lightDir);
+	vec4 texel = textureCube(sDepthMap, -lightDir);
 	gl_FragColor.rgb *= clamp(exp(-c * (depth - unpack(texel))), 0.6, 1.0);
 }

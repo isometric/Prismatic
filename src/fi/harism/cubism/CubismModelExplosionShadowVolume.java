@@ -18,6 +18,10 @@ package fi.harism.cubism;
 
 public class CubismModelExplosionShadowVolume extends CubismModelExplosion {
 
+	public CubismModelExplosionShadowVolume(int CUBE_DIV) {
+		super(CUBE_DIV);
+	}
+
 	@Override
 	public int getRenderMode() {
 		return MODE_SHADOWVOLUME;

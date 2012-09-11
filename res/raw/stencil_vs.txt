@@ -1,8 +1,7 @@
 
 uniform mat4 uModelM;
-uniform mat4 uViewM;
-uniform mat4 uProjectionM;
-uniform mat4 uExtrudeM;
+uniform mat4 uViewProjectionM;
+uniform mat4 uViewExtrudeM;
 uniform vec3 uLightPosition;
 
 attribute vec4 aPosition;
@@ -19,9 +18,9 @@ void main() {
 		gl_Position = vec4(100.0, 0.0, 0.0, 1.0);
 	}
 	else if (aPosition.w > 0.0) {
-		gl_Position = uProjectionM * uViewM * pos;
+		gl_Position = uViewProjectionM * pos;
 	}
 	else {
-		gl_Position = uExtrudeM * uViewM * vec4(lightDir, 0.0);
+		gl_Position = uViewExtrudeM * vec4(lightDir, 0.0);
 	}
 }

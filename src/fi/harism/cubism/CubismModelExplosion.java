@@ -23,14 +23,13 @@ import android.util.FloatMath;
 
 public class CubismModelExplosion implements CubismRenderer.Model {
 
-	private static final int CUBE_DIV = 10;
-	private static final float CUBE_SCALE = 1f / CUBE_DIV;
-	private static final int CUBE_SZ = CUBE_DIV * CUBE_DIV * 2 + CUBE_DIV
-			* (CUBE_DIV - 2) * 2 + (CUBE_DIV - 2) * (CUBE_DIV - 2) * 2;
-
 	private Cube[] mCubes;
 
-	public CubismModelExplosion() {
+	public CubismModelExplosion(int CUBE_DIV) {
+		float CUBE_SCALE = 1f / CUBE_DIV;
+		int CUBE_SZ = CUBE_DIV * CUBE_DIV * 2 + CUBE_DIV * (CUBE_DIV - 2) * 2
+				+ (CUBE_DIV - 2) * (CUBE_DIV - 2) * 2;
+
 		int idx = 0;
 		mCubes = new Cube[CUBE_SZ];
 		for (int x = 0; x < CUBE_DIV; ++x) {
