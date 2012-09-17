@@ -18,7 +18,6 @@ package fi.harism.cubism;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.util.Log;
 
 public class CubismModelBitmap implements CubismRenderer.Model {
 
@@ -33,8 +32,6 @@ public class CubismModelBitmap implements CubismRenderer.Model {
 				}
 			}
 		}
-		Log.d("PIXELS", "pixelCount=" + pixelCount + " w=" + bitmap.getWidth()
-				+ " h=" + bitmap.getHeight());
 
 		int cubeDiv = 0;
 		while (6 * cubeDiv * cubeDiv - 12 * cubeDiv + 8 < pixelCount) {
@@ -59,6 +56,9 @@ public class CubismModelBitmap implements CubismRenderer.Model {
 					mCubes[idx].mPositionCtrl0[0] = tx;
 					mCubes[idx].mPositionCtrl0[1] = ty;
 					mCubes[idx].mPositionCtrl0[2] = tz;
+					mCubes[idx].mPositionCtrl1[0] = (float) (Math.random() * 6 - 3);
+					mCubes[idx].mPositionCtrl1[1] = (float) (Math.random() * 6 - 3);
+					mCubes[idx].mPositionCtrl1[2] = (float) (Math.random() * 6 - 3);
 
 					mCubes[idx].mRotationTarget[0] = 90 * (int) (Math.random() * 8 - 4);
 					mCubes[idx].mRotationTarget[1] = 90 * (int) (Math.random() * 8 - 4);
@@ -112,12 +112,6 @@ public class CubismModelBitmap implements CubismRenderer.Model {
 					+ cube.mPositionCtrl0[1] * Math.random() * 3;
 			cube.mPositionCtrl2[2] += cube.mPositionCtrl0[2]
 					+ cube.mPositionCtrl0[2] * Math.random() * 3;
-		}
-
-		for (Cube cube : mCubes) {
-			cube.mPositionCtrl1[0] = (float) (Math.random() * 6 - 3);
-			cube.mPositionCtrl1[1] = (float) (Math.random() * 6 - 3);
-			cube.mPositionCtrl1[2] = (float) (Math.random() * 6 - 3);
 		}
 	}
 

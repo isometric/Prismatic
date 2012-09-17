@@ -90,7 +90,7 @@ public final class CubismRenderer extends GLSurfaceView implements
 		mModels = new Model[8];
 		mModels[0] = new CubismModelBasic();
 		mModels[1] = new CubismModelExplosion(10);
-		mModels[2] = new CubismModelRandom();
+		mModels[2] = new CubismModelRandom(6);
 		mModels[3] = new CubismModelBitmap(BitmapFactory.decodeStream(mContext
 				.getResources().openRawResource(R.raw.img_cubism)));
 		mModels[4] = new CubismModelBitmap(BitmapFactory.decodeStream(mContext

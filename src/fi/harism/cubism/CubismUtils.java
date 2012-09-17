@@ -34,9 +34,13 @@ public final class CubismUtils {
 		int len = Math.min(p0.length, p1.length);
 		len = Math.min(len, p2.length);
 		len = Math.min(len, out.length);
+
+		float t0 = (1.0f - t) * (1.0f - t);
+		float t1 = 2.0f * (1.0f - t) * t;
+		float t2 = t * t;
+
 		for (int i = 0; i < len; ++i) {
-			out[i] = (1.0f - t) * (1.0f - t) * p0[i] + 2.0f * (1.0f - t) * t
-					* p1[i] + t * t * p2[i];
+			out[i] = t0 * p0[i] + t1 * p1[i] + t2 * p2[i];
 		}
 	}
 

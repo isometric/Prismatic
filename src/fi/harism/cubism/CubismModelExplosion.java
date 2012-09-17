@@ -25,23 +25,23 @@ public class CubismModelExplosion implements CubismRenderer.Model {
 
 	private Cube[] mCubes;
 
-	public CubismModelExplosion(int CUBE_DIV) {
-		float CUBE_SCALE = 1f / CUBE_DIV;
-		int CUBE_SZ = CUBE_DIV * CUBE_DIV * 2 + CUBE_DIV * (CUBE_DIV - 2) * 2
-				+ (CUBE_DIV - 2) * (CUBE_DIV - 2) * 2;
+	public CubismModelExplosion(int cubeSize) {
+		float cubeScale = 1f / cubeSize;
+		int cubeCount = cubeSize * cubeSize * 2 + cubeSize * (cubeSize - 2) * 2
+				+ (cubeSize - 2) * (cubeSize - 2) * 2;
 
 		int idx = 0;
-		mCubes = new Cube[CUBE_SZ];
-		for (int x = 0; x < CUBE_DIV; ++x) {
-			for (int y = 0; y < CUBE_DIV; ++y) {
-				for (int z = 0; z < CUBE_DIV;) {
+		mCubes = new Cube[cubeCount];
+		for (int x = 0; x < cubeSize; ++x) {
+			for (int y = 0; y < cubeSize; ++y) {
+				for (int z = 0; z < cubeSize;) {
 					mCubes[idx] = new Cube();
-					mCubes[idx].setScale(CUBE_SCALE);
+					mCubes[idx].setScale(cubeScale);
 
-					float t = 2.0f * CUBE_SCALE;
-					float tx = x * t + CUBE_SCALE - 1f;
-					float ty = y * t + CUBE_SCALE - 1f;
-					float tz = z * t + CUBE_SCALE - 1f;
+					float t = 2.0f * cubeScale;
+					float tx = x * t + cubeScale - 1f;
+					float ty = y * t + cubeScale - 1f;
+					float tz = z * t + cubeScale - 1f;
 
 					mCubes[idx].mPositionSource[0] = tx;
 					mCubes[idx].mPositionSource[1] = ty;
@@ -60,8 +60,8 @@ public class CubismModelExplosion implements CubismRenderer.Model {
 
 					++idx;
 
-					if (x > 0 && y > 0 && x < CUBE_DIV - 1 && y < CUBE_DIV - 1) {
-						z += CUBE_DIV - 1;
+					if (x > 0 && y > 0 && x < cubeSize - 1 && y < cubeSize - 1) {
+						z += cubeSize - 1;
 					} else {
 						++z;
 					}
