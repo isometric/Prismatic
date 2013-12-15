@@ -26,7 +26,7 @@ import javax.microedition.khronos.opengles.GL10;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
-import android.opengl.GLES20;
+import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.Handler;
@@ -76,7 +76,7 @@ public final class CubismRenderer extends GLSurfaceView implements
 		mParser = parser;
 		mMediaPlayer = mediaPlayer;
 
-		setEGLContextClientVersion(2);
+		setEGLContextClientVersion(3);
 		setRenderer(this);
 		setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 
@@ -127,7 +127,7 @@ public final class CubismRenderer extends GLSurfaceView implements
 		switch (mInitCounter) {
 		case 0: {
 			// Check if shader compiler is supported.
-			GLES20.glGetBooleanv(GLES20.GL_SHADER_COMPILER,
+			GLES30.glGetBooleanv(GLES30.GL_SHADER_COMPILER,
 					mShaderCompilerSupport, 0);
 
 			// If not, show user an error message and return immediately.
@@ -137,8 +137,8 @@ public final class CubismRenderer extends GLSurfaceView implements
 			}
 		}
 		case 1: {
-			GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+			GLES30.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
 			if (!mShaderCompilerSupport[0]) {
 				mInitCounter = 1;
 				return;
@@ -187,10 +187,9 @@ public final class CubismRenderer extends GLSurfaceView implements
 					40f);
 			CubismUtils.setExtrudeM(mMatrixExtrude, 45f, aspectR, .1f);
 
-			mFboCubeMap.init(512, 512, GLES20.GL_TEXTURE_CUBE_MAP, 1, true,
-					false);
+			mFboCubeMap.init(512, 512, GLES30.GL_TEXTURE_CUBE_MAP, 1, true);
 			mFboQuarter.init(mWidth / 4, mHeight / 4, 2);
-			mFboFull.init(mWidth, mHeight, GLES20.GL_TEXTURE_2D, 1, true, true);
+			mFboFull.init(mWidth, mHeight, GLES30.GL_TEXTURE_2D, 1, true);
 
 			mInitCounter = 4;
 		}
@@ -205,36 +204,37 @@ public final class CubismRenderer extends GLSurfaceView implements
 		case Model.MODE_SHADOWMAP: {
 			renderDepthMap();
 
-			mFboFull.bindTexture(GLES20.GL_TEXTURE_2D, 0);
-			GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
+			mFboFull.bindTexture(GLES30.GL_TEXTURE_2D, 0);
+			GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
+
 			renderScene(renderMode);
 			renderBloom();
 			break;
 		}
 		case Model.MODE_SHADOWVOLUME: {
-			mFboFull.bindTexture(GLES20.GL_TEXTURE_2D, 0);
-			GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT
-					| GLES20.GL_STENCIL_BUFFER_BIT);
+			mFboFull.bindTexture(GLES30.GL_TEXTURE_2D, 0);
+			GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT
+					| GLES30.GL_STENCIL_BUFFER_BIT);
 
 			renderScene(renderMode);
 			renderShadowStencil();
 
-			GLES20.glEnable(GLES20.GL_STENCIL_TEST);
-			GLES20.glEnable(GLES20.GL_BLEND);
-			GLES20.glStencilFunc(GLES20.GL_NOTEQUAL, 0x00, 0xFF);
-			GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA,
-					GLES20.GL_ONE_MINUS_SRC_ALPHA);
+			GLES30.glEnable(GLES30.GL_STENCIL_TEST);
+			GLES30.glEnable(GLES30.GL_BLEND);
+			GLES30.glStencilFunc(GLES30.GL_NOTEQUAL, 0x00, 0xFF);
+			GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA,
+					GLES30.GL_ONE_MINUS_SRC_ALPHA);
 
 			mShaderStencilMask.useProgram();
-			GLES20.glVertexAttribPointer(
+			GLES30.glVertexAttribPointer(
 					mShaderStencilMask.getHandle("aPosition"), 2,
-					GLES20.GL_BYTE, false, 0, mBufferQuad);
-			GLES20.glEnableVertexAttribArray(mShaderStencilMask
+					GLES30.GL_BYTE, false, 0, mBufferQuad);
+			GLES30.glEnableVertexAttribArray(mShaderStencilMask
 					.getHandle("aPosition"));
-			GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+			GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4);
 
-			GLES20.glDisable(GLES20.GL_STENCIL_TEST);
-			GLES20.glDisable(GLES20.GL_BLEND);
+			GLES30.glDisable(GLES30.GL_STENCIL_TEST);
+			GLES30.glDisable(GLES30.GL_BLEND);
 
 			renderBloom();
 			break;
@@ -281,110 +281,110 @@ public final class CubismRenderer extends GLSurfaceView implements
 		double incrementalGaussian3 = incrementalGaussian2
 				* incrementalGaussian2;
 
-		GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+		GLES30.glDisable(GLES30.GL_DEPTH_TEST);
 
 		/**
 		 * First pass, blur texture horizontally.
 		 */
 
-		mFboQuarter.bindTexture(GLES20.GL_TEXTURE_2D, 0);
+		mFboQuarter.bindTexture(GLES30.GL_TEXTURE_2D, 0);
 		mShaderBloom1.useProgram();
 
-		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFboFull.getTexture(0));
-		GLES20.glUniform3f(mShaderBloom1.getHandle("uIncrementalGaussian"),
+		GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+		GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFboFull.getTexture(0));
+		GLES30.glUniform3f(mShaderBloom1.getHandle("uIncrementalGaussian"),
 				(float) incrementalGaussian1, (float) incrementalGaussian2,
 				(float) incrementalGaussian3);
-		GLES20.glUniform1f(mShaderBloom1.getHandle("uNumBlurPixelsPerSide"),
+		GLES30.glUniform1f(mShaderBloom1.getHandle("uNumBlurPixelsPerSide"),
 				numBlurPixelsPerSide);
-		GLES20.glUniform2f(mShaderBloom1.getHandle("uBlurOffset"), blurSizeH,
+		GLES30.glUniform2f(mShaderBloom1.getHandle("uBlurOffset"), blurSizeH,
 				0f);
 
-		GLES20.glVertexAttribPointer(mShaderBloom1.getHandle("aPosition"), 2,
-				GLES20.GL_BYTE, false, 0, mBufferQuad);
-		GLES20.glEnableVertexAttribArray(mShaderBloom1.getHandle("aPosition"));
-		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+		GLES30.glVertexAttribPointer(mShaderBloom1.getHandle("aPosition"), 2,
+				GLES30.GL_BYTE, false, 0, mBufferQuad);
+		GLES30.glEnableVertexAttribArray(mShaderBloom1.getHandle("aPosition"));
+		GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4);
 
 		/**
 		 * Second pass, blur texture vertically.
 		 */
-		mFboQuarter.bindTexture(GLES20.GL_TEXTURE_2D, 1);
+		mFboQuarter.bindTexture(GLES30.GL_TEXTURE_2D, 1);
 		mShaderBloom2.useProgram();
 
-		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFboQuarter.getTexture(0));
-		GLES20.glUniform3f(mShaderBloom2.getHandle("uIncrementalGaussian"),
+		GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+		GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFboQuarter.getTexture(0));
+		GLES30.glUniform3f(mShaderBloom2.getHandle("uIncrementalGaussian"),
 				(float) incrementalGaussian1, (float) incrementalGaussian2,
 				(float) incrementalGaussian3);
-		GLES20.glUniform1f(mShaderBloom2.getHandle("uNumBlurPixelsPerSide"),
+		GLES30.glUniform1f(mShaderBloom2.getHandle("uNumBlurPixelsPerSide"),
 				numBlurPixelsPerSide);
-		GLES20.glUniform2f(mShaderBloom2.getHandle("uBlurOffset"), 0f,
+		GLES30.glUniform2f(mShaderBloom2.getHandle("uBlurOffset"), 0f,
 				blurSizeV);
 
-		GLES20.glVertexAttribPointer(mShaderBloom2.getHandle("aPosition"), 2,
-				GLES20.GL_BYTE, false, 0, mBufferQuad);
-		GLES20.glEnableVertexAttribArray(mShaderBloom2.getHandle("aPosition"));
-		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+		GLES30.glVertexAttribPointer(mShaderBloom2.getHandle("aPosition"), 2,
+				GLES30.GL_BYTE, false, 0, mBufferQuad);
+		GLES30.glEnableVertexAttribArray(mShaderBloom2.getHandle("aPosition"));
+		GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4);
 
 		/**
 		 * Third pass, combine source texture and calculated bloom texture into
 		 * output texture.
 		 */
 
-		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-		GLES20.glViewport(0, 0, mWidth, mHeight);
+		GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
+		GLES30.glViewport(0, 0, mWidth, mHeight);
 
 		mShaderBloom3.useProgram();
 
-		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFboQuarter.getTexture(1));
-		GLES20.glUniform1i(mShaderBloom3.getHandle("sTextureBloom"), 0);
-		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFboFull.getTexture(0));
-		GLES20.glUniform1i(mShaderBloom3.getHandle("sTextureSource"), 1);
-		GLES20.glUniform4fv(mShaderBloom3.getHandle("uForegroundColor"), 1,
+		GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+		GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFboQuarter.getTexture(1));
+		GLES30.glUniform1i(mShaderBloom3.getHandle("sTextureBloom"), 0);
+		GLES30.glActiveTexture(GLES30.GL_TEXTURE1);
+		GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFboFull.getTexture(0));
+		GLES30.glUniform1i(mShaderBloom3.getHandle("sTextureSource"), 1);
+		GLES30.glUniform4fv(mShaderBloom3.getHandle("uForegroundColor"), 1,
 				mParserData.mForegroundColor, 0);
 
-		GLES20.glVertexAttribPointer(mShaderBloom3.getHandle("aPosition"), 2,
-				GLES20.GL_BYTE, false, 0, mBufferQuad);
-		GLES20.glEnableVertexAttribArray(mShaderBloom3.getHandle("aPosition"));
-		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+		GLES30.glVertexAttribPointer(mShaderBloom3.getHandle("aPosition"), 2,
+				GLES30.GL_BYTE, false, 0, mBufferQuad);
+		GLES30.glEnableVertexAttribArray(mShaderBloom3.getHandle("aPosition"));
+		GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4);
 	}
 
 	public void renderDepthMap() {
 		// Render shadow map forward.
-		mFboCubeMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0);
-		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
+		mFboCubeMap.bindTexture(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0);
+		GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
 		CubismUtils.setRotateM(mMatrixRotate, 0f, 0f, 180f);
 		renderDepthMapFace(mMatrixRotate);
 
 		// Render shadow map right.
-		mFboCubeMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0);
-		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
+		mFboCubeMap.bindTexture(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0);
+		GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
 		CubismUtils.setRotateM(mMatrixRotate, 0f, 90f, 180f);
 		renderDepthMapFace(mMatrixRotate);
 
 		// Render shadow map back.
-		mFboCubeMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0);
-		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
+		mFboCubeMap.bindTexture(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0);
+		GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
 		CubismUtils.setRotateM(mMatrixRotate, 0f, 180f, 180f);
 		renderDepthMapFace(mMatrixRotate);
 
 		// Render shadow map left.
-		mFboCubeMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0);
-		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
+		mFboCubeMap.bindTexture(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0);
+		GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
 		CubismUtils.setRotateM(mMatrixRotate, 0f, -90f, 180f);
 		renderDepthMapFace(mMatrixRotate);
 
 		// Render shadow map down.
-		mFboCubeMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0);
-		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
+		mFboCubeMap.bindTexture(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0);
+		GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
 		CubismUtils.setRotateM(mMatrixRotate, -90f, 0f, 0f);
 		renderDepthMapFace(mMatrixRotate);
 
 		// Render shadow map up.
-		mFboCubeMap.bindTexture(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0);
-		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
+		mFboCubeMap.bindTexture(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0);
+		GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
 		CubismUtils.setRotateM(mMatrixRotate, 90f, 0f, 0f);
 		renderDepthMapFace(mMatrixRotate);
 	}
@@ -401,15 +401,15 @@ public final class CubismRenderer extends GLSurfaceView implements
 		Matrix.multiplyMM(mMatrixViewProjection, 0, viewRotateM, 0,
 				mMatrixViewLight, 0);
 
-		GLES20.glUniformMatrix4fv(uViewM, 1, false, mMatrixViewProjection, 0);
-		GLES20.glUniformMatrix4fv(uProjM, 1, false, mMatrixProjectionDepth, 0);
+		GLES30.glUniformMatrix4fv(uViewM, 1, false, mMatrixViewProjection, 0);
+		GLES30.glUniformMatrix4fv(uProjM, 1, false, mMatrixProjectionDepth, 0);
 
-		GLES20.glVertexAttribPointer(aPosition, 3, GLES20.GL_BYTE, false, 0,
+		GLES30.glVertexAttribPointer(aPosition, 3, GLES30.GL_BYTE, false, 0,
 				CubismCube.getVertices());
-		GLES20.glEnableVertexAttribArray(aPosition);
+		GLES30.glEnableVertexAttribArray(aPosition);
 
-		GLES20.glEnable(GLES20.GL_CULL_FACE);
-		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+		GLES30.glEnable(GLES30.GL_CULL_FACE);
+		GLES30.glEnable(GLES30.GL_DEPTH_TEST);
 
 		Matrix.multiplyMM(mMatrixViewProjection, 0, mMatrixProjectionDepth, 0,
 				mMatrixViewProjection, 0);
@@ -419,17 +419,17 @@ public final class CubismRenderer extends GLSurfaceView implements
 		for (int i = 0; i < cubes.length; ++i) {
 			if (CubismVisibility.intersects(mPlanes,
 					cubes[i].getBoundingSphere())) {
-				GLES20.glUniformMatrix4fv(uModelM, 1, false,
+				GLES30.glUniformMatrix4fv(uModelM, 1, false,
 						cubes[i].getModelM(), 0);
-				GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
+				GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
 			}
 		}
 
-		GLES20.glUniformMatrix4fv(uModelM, 1, false, mSkybox.getModelM(), 0);
+		GLES30.glUniformMatrix4fv(uModelM, 1, false, mSkybox.getModelM(), 0);
 
-		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
+		GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
 
-		GLES20.glDisable(GLES20.GL_CULL_FACE);
+		GLES30.glDisable(GLES30.GL_CULL_FACE);
 	}
 
 	public void renderScene(int renderMode) {
@@ -449,28 +449,28 @@ public final class CubismRenderer extends GLSurfaceView implements
 		int aPosition = shader.getHandle("aPosition");
 		int aNormal = shader.getHandle("aNormal");
 
-		GLES20.glUniform3fv(uLightPos, 1, mParserData.mLightPosition, 0);
+		GLES30.glUniform3fv(uLightPos, 1, mParserData.mLightPosition, 0);
 
-		GLES20.glVertexAttribPointer(aPosition, 3, GLES20.GL_BYTE, false, 0,
+		GLES30.glVertexAttribPointer(aPosition, 3, GLES30.GL_BYTE, false, 0,
 				CubismCube.getVertices());
-		GLES20.glEnableVertexAttribArray(aPosition);
+		GLES30.glEnableVertexAttribArray(aPosition);
 
-		GLES20.glVertexAttribPointer(aNormal, 3, GLES20.GL_BYTE, false, 0,
+		GLES30.glVertexAttribPointer(aNormal, 3, GLES30.GL_BYTE, false, 0,
 				CubismCube.getNormals());
-		GLES20.glEnableVertexAttribArray(aNormal);
+		GLES30.glEnableVertexAttribArray(aNormal);
 
 		if (renderMode == Model.MODE_SHADOWMAP) {
-			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-			GLES20.glBindTexture(GLES20.GL_TEXTURE_CUBE_MAP,
+			GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+			GLES30.glBindTexture(GLES30.GL_TEXTURE_CUBE_MAP,
 					mFboCubeMap.getTexture(0));
 		}
 
-		GLES20.glEnable(GLES20.GL_CULL_FACE);
-		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+		GLES30.glEnable(GLES30.GL_CULL_FACE);
+		GLES30.glEnable(GLES30.GL_DEPTH_TEST);
 
-		GLES20.glUniformMatrix4fv(uViewM, 1, false, mMatrixView, 0);
-		GLES20.glUniformMatrix4fv(uProjM, 1, false, mMatrixProjection, 0);
-		GLES20.glUniform3f(uColor, .4f, .6f, 1f);
+		GLES30.glUniformMatrix4fv(uViewM, 1, false, mMatrixView, 0);
+		GLES30.glUniformMatrix4fv(uProjM, 1, false, mMatrixProjection, 0);
+		GLES30.glUniform3f(uColor, .4f, .6f, 1f);
 
 		Matrix.multiplyMM(mMatrixViewProjection, 0, mMatrixProjection, 0,
 				mMatrixView, 0);
@@ -480,22 +480,22 @@ public final class CubismRenderer extends GLSurfaceView implements
 		for (int i = 0; i < cubes.length; ++i) {
 			if (CubismVisibility.intersects(mPlanes,
 					cubes[i].getBoundingSphere())) {
-				GLES20.glUniformMatrix4fv(uModelM, 1, false,
+				GLES30.glUniformMatrix4fv(uModelM, 1, false,
 						cubes[i].getModelM(), 0);
-				GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
+				GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
 			}
 		}
 
-		GLES20.glUniformMatrix4fv(uModelM, 1, false, mSkybox.getModelM(), 0);
-		GLES20.glUniform3f(uColor, .5f, .5f, .5f);
+		GLES30.glUniformMatrix4fv(uModelM, 1, false, mSkybox.getModelM(), 0);
+		GLES30.glUniform3f(uColor, .5f, .5f, .5f);
 
-		GLES20.glVertexAttribPointer(aNormal, 3, GLES20.GL_BYTE, false, 0,
+		GLES30.glVertexAttribPointer(aNormal, 3, GLES30.GL_BYTE, false, 0,
 				CubismCube.getNormalsInv());
-		GLES20.glEnableVertexAttribArray(aNormal);
+		GLES30.glEnableVertexAttribArray(aNormal);
 
-		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
+		GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
 
-		GLES20.glDisable(GLES20.GL_CULL_FACE);
+		GLES30.glDisable(GLES30.GL_CULL_FACE);
 	}
 
 	public void renderShadowStencil() {
@@ -512,51 +512,51 @@ public final class CubismRenderer extends GLSurfaceView implements
 		int aPosition = mShaderStencil.getHandle("aPosition");
 		int aNormal = mShaderStencil.getHandle("aNormal");
 
-		GLES20.glUniform3fv(uLightPosition, 1, mParserData.mLightPosition, 0);
+		GLES30.glUniform3fv(uLightPosition, 1, mParserData.mLightPosition, 0);
 
-		GLES20.glVertexAttribPointer(aPosition, 4, GLES20.GL_BYTE, false, 0,
+		GLES30.glVertexAttribPointer(aPosition, 4, GLES30.GL_BYTE, false, 0,
 				CubismCube.getVerticesShadow());
-		GLES20.glEnableVertexAttribArray(aPosition);
+		GLES30.glEnableVertexAttribArray(aPosition);
 
-		GLES20.glVertexAttribPointer(aNormal, 3, GLES20.GL_BYTE, false, 0,
+		GLES30.glVertexAttribPointer(aNormal, 3, GLES30.GL_BYTE, false, 0,
 				CubismCube.getNormalsShadow());
-		GLES20.glEnableVertexAttribArray(aNormal);
+		GLES30.glEnableVertexAttribArray(aNormal);
 
-		GLES20.glDisable(GLES20.GL_CULL_FACE);
-		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-		GLES20.glEnable(GLES20.GL_STENCIL_TEST);
-		// GLES20.glEnable(GLES20.GL_BLEND);
+		GLES30.glDisable(GLES30.GL_CULL_FACE);
+		GLES30.glEnable(GLES30.GL_DEPTH_TEST);
+		GLES30.glEnable(GLES30.GL_STENCIL_TEST);
+		// GLES30.glEnable(GLES30.GL_BLEND);
 
-		GLES20.glUniformMatrix4fv(uViewProjectionM, 1, false,
+		GLES30.glUniformMatrix4fv(uViewProjectionM, 1, false,
 				mMatrixViewProjection, 0);
-		GLES20.glUniformMatrix4fv(uViewExtrudeM, 1, false, mMatrixViewExtrude,
+		GLES30.glUniformMatrix4fv(uViewExtrudeM, 1, false, mMatrixViewExtrude,
 				0);
 
-		GLES20.glDepthMask(false);
-		GLES20.glColorMask(false, false, false, false);
-		// GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA,
-		// GLES20.GL_ONE_MINUS_SRC_ALPHA);
+		GLES30.glDepthMask(false);
+		GLES30.glColorMask(false, false, false, false);
+		// GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA,
+		// GLES30.GL_ONE_MINUS_SRC_ALPHA);
 
-		GLES20.glStencilFunc(GLES20.GL_ALWAYS, 0x00, 0xFF);
-		GLES20.glStencilOpSeparate(GLES20.GL_FRONT, GLES20.GL_KEEP,
-				GLES20.GL_KEEP, GLES20.GL_INCR_WRAP);
-		GLES20.glStencilOpSeparate(GLES20.GL_BACK, GLES20.GL_KEEP,
-				GLES20.GL_KEEP, GLES20.GL_DECR_WRAP);
+		GLES30.glStencilFunc(GLES30.GL_ALWAYS, 0x00, 0xFF);
+		GLES30.glStencilOpSeparate(GLES30.GL_FRONT, GLES30.GL_KEEP,
+				GLES30.GL_KEEP, GLES30.GL_INCR_WRAP);
+		GLES30.glStencilOpSeparate(GLES30.GL_BACK, GLES30.GL_KEEP,
+				GLES30.GL_KEEP, GLES30.GL_DECR_WRAP);
 
 		CubismCube[] cubes = mModels[mParserData.mModelId].getCubes();
 		for (int i = 0; i < cubes.length; ++i) {
-			GLES20.glUniformMatrix4fv(uModelM, 1, false, cubes[i].getModelM(),
+			GLES30.glUniformMatrix4fv(uModelM, 1, false, cubes[i].getModelM(),
 					0);
-			GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 24);
+			GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 24);
 		}
 
-		GLES20.glDepthMask(true);
-		GLES20.glColorMask(true, true, true, true);
+		GLES30.glDepthMask(true);
+		GLES30.glColorMask(true, true, true, true);
 
-		GLES20.glDisable(GLES20.GL_CULL_FACE);
-		GLES20.glDisable(GLES20.GL_DEPTH_TEST);
-		GLES20.glDisable(GLES20.GL_STENCIL_TEST);
-		// GLES20.glDisable(GLES20.GL_BLEND);
+		GLES30.glDisable(GLES30.GL_CULL_FACE);
+		GLES30.glDisable(GLES30.GL_DEPTH_TEST);
+		GLES30.glDisable(GLES30.GL_STENCIL_TEST);
+		// GLES30.glDisable(GLES30.GL_BLEND);
 	}
 
 	/**

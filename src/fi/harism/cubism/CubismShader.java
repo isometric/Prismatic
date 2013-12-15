@@ -18,7 +18,7 @@ package fi.harism.cubism;
 
 import java.util.HashMap;
 
-import android.opengl.GLES20;
+import android.opengl.GLES30;
 import android.util.Log;
 
 /**
@@ -37,9 +37,9 @@ public final class CubismShader {
 	 * Deletes program and shaders associated with it.
 	 */
 	public void deleteProgram() {
-		GLES20.glDeleteShader(mIdShaderFragment);
-		GLES20.glDeleteShader(mIdShaderVertex);
-		GLES20.glDeleteProgram(mIdProgram);
+		GLES30.glDeleteShader(mIdShaderFragment);
+		GLES30.glDeleteShader(mIdShaderVertex);
+		GLES30.glDeleteProgram(mIdProgram);
 		mIdProgram = mIdShaderVertex = mIdShaderFragment = 0;
 	}
 
@@ -55,9 +55,9 @@ public final class CubismShader {
 		if (mShaderHandleMap.containsKey(name)) {
 			return mShaderHandleMap.get(name);
 		}
-		int handle = GLES20.glGetAttribLocation(mIdProgram, name);
+		int handle = GLES30.glGetAttribLocation(mIdProgram, name);
 		if (handle == -1) {
-			handle = GLES20.glGetUniformLocation(mIdProgram, name);
+			handle = GLES30.glGetUniformLocation(mIdProgram, name);
 		}
 		if (handle == -1) {
 			// One should never leave log messages but am not going to follow
@@ -97,15 +97,15 @@ public final class CubismShader {
 	 * @return id for compiled shader
 	 */
 	private int loadShader(int shaderType, String source) throws Exception {
-		int shader = GLES20.glCreateShader(shaderType);
+		int shader = GLES30.glCreateShader(shaderType);
 		if (shader != 0) {
-			GLES20.glShaderSource(shader, source);
-			GLES20.glCompileShader(shader);
+			GLES30.glShaderSource(shader, source);
+			GLES30.glCompileShader(shader);
 			int[] compiled = new int[1];
-			GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compiled, 0);
+			GLES30.glGetShaderiv(shader, GLES30.GL_COMPILE_STATUS, compiled, 0);
 			if (compiled[0] == 0) {
-				String error = GLES20.glGetShaderInfoLog(shader);
-				GLES20.glDeleteShader(shader);
+				String error = GLES30.glGetShaderInfoLog(shader);
+				GLES30.glDeleteShader(shader);
 				throw new Exception(error);
 			}
 		}
@@ -125,18 +125,18 @@ public final class CubismShader {
 	 */
 	public void setProgram(String vertexSource, String fragmentSource)
 			throws Exception {
-		mIdShaderVertex = loadShader(GLES20.GL_VERTEX_SHADER, vertexSource);
-		mIdShaderFragment = loadShader(GLES20.GL_FRAGMENT_SHADER,
+		mIdShaderVertex = loadShader(GLES30.GL_VERTEX_SHADER, vertexSource);
+		mIdShaderFragment = loadShader(GLES30.GL_FRAGMENT_SHADER,
 				fragmentSource);
-		int program = GLES20.glCreateProgram();
+		int program = GLES30.glCreateProgram();
 		if (program != 0) {
-			GLES20.glAttachShader(program, mIdShaderVertex);
-			GLES20.glAttachShader(program, mIdShaderFragment);
-			GLES20.glLinkProgram(program);
+			GLES30.glAttachShader(program, mIdShaderVertex);
+			GLES30.glAttachShader(program, mIdShaderFragment);
+			GLES30.glLinkProgram(program);
 			int[] linkStatus = new int[1];
-			GLES20.glGetProgramiv(program, GLES20.GL_LINK_STATUS, linkStatus, 0);
-			if (linkStatus[0] != GLES20.GL_TRUE) {
-				String error = GLES20.glGetProgramInfoLog(program);
+			GLES30.glGetProgramiv(program, GLES30.GL_LINK_STATUS, linkStatus, 0);
+			if (linkStatus[0] != GLES30.GL_TRUE) {
+				String error = GLES30.glGetProgramInfoLog(program);
 				deleteProgram();
 				throw new Exception(error);
 			}
@@ -149,7 +149,7 @@ public final class CubismShader {
 	 * Activates this shader program.
 	 */
 	public void useProgram() {
-		GLES20.glUseProgram(mIdProgram);
+		GLES30.glUseProgram(mIdProgram);
 	}
 
 }

@@ -16,7 +16,7 @@
 
 package fi.harism.cubism;
 
-import android.opengl.GLES20;
+import android.opengl.GLES30;
 
 /**
  * Helper class for handling frame buffer objects.
@@ -43,10 +43,10 @@ public final class CubismFbo {
 	 *            Index of texture to bind.
 	 */
 	public void bindTexture(int target, int index) {
-		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBufferHandle);
-		GLES20.glViewport(0, 0, mWidth, mHeight);
-		GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER,
-				GLES20.GL_COLOR_ATTACHMENT0, target, mTextureHandles[index], 0);
+		GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, mFrameBufferHandle);
+		GLES30.glViewport(0, 0, mWidth, mHeight);
+		GLES30.glFramebufferTexture2D(GLES30.GL_FRAMEBUFFER,
+				GLES30.GL_COLOR_ATTACHMENT0, target, mTextureHandles[index], 0);
 	}
 
 	/**
@@ -80,7 +80,7 @@ public final class CubismFbo {
 
 	/**
 	 * Initializes FBO with given parameters. Calls simply init(int, int,
-	 * GLES20.GL_TEXTURE_2D, int, false, false) without stencil and depth buffer
+	 * GLES30.GL_TEXTURE_2D, int, false, false) without stencil and depth buffer
 	 * generations.
 	 * 
 	 * @param width
@@ -91,7 +91,7 @@ public final class CubismFbo {
 	 *            Number of textures to generate.
 	 */
 	public void init(int width, int height, int textureCount) {
-		init(width, height, GLES20.GL_TEXTURE_2D, textureCount, false, false);
+		init(width, height, GLES30.GL_TEXTURE_2D, textureCount, false);
 	}
 
 	/**
@@ -107,13 +107,11 @@ public final class CubismFbo {
 	 *            GL_TEXTURE_2D or GL_TEXTURE_CUBE_MAP
 	 * @param textureCount
 	 *            Number of textures to generate
-	 * @param genDepthBuffer
-	 *            If true, depth buffer is allocated for this FBO
-	 * @param genStencilBuffer
-	 *            If true, stencil buffer is allocated for this FBO
+	 * @param genDepthStencilBuffer
+	 *            If true, depth and stencil buffers are allocated for this FBO
 	 */
 	public void init(int width, int height, int target, int textureCount,
-			boolean genDepthBuffer, boolean genStencilBuffer) {
+			boolean genDepthStencilBuffer) {
 
 		// Just in case.
 		reset();
@@ -124,72 +122,66 @@ public final class CubismFbo {
 
 		// Genereta FBO.
 		int handle[] = { 0 };
-		GLES20.glGenFramebuffers(1, handle, 0);
+		GLES30.glGenFramebuffers(1, handle, 0);
 		mFrameBufferHandle = handle[0];
-		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBufferHandle);
+		GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, mFrameBufferHandle);
 
 		// Generate textures.
 		mTextureHandles = new int[textureCount];
-		GLES20.glGenTextures(textureCount, mTextureHandles, 0);
+		GLES30.glGenTextures(textureCount, mTextureHandles, 0);
 		for (int texture : mTextureHandles) {
-			GLES20.glBindTexture(target, texture);
-			GLES20.glTexParameteri(target, GLES20.GL_TEXTURE_WRAP_S,
-					GLES20.GL_CLAMP_TO_EDGE);
-			GLES20.glTexParameteri(target, GLES20.GL_TEXTURE_WRAP_T,
-					GLES20.GL_CLAMP_TO_EDGE);
-			GLES20.glTexParameteri(target, GLES20.GL_TEXTURE_MIN_FILTER,
-					GLES20.GL_NEAREST);
-			GLES20.glTexParameteri(target, GLES20.GL_TEXTURE_MAG_FILTER,
-					GLES20.GL_LINEAR);
+			GLES30.glBindTexture(target, texture);
+			GLES30.glTexParameteri(target, GLES30.GL_TEXTURE_WRAP_S,
+					GLES30.GL_CLAMP_TO_EDGE);
+			GLES30.glTexParameteri(target, GLES30.GL_TEXTURE_WRAP_T,
+					GLES30.GL_CLAMP_TO_EDGE);
+			GLES30.glTexParameteri(target, GLES30.GL_TEXTURE_MIN_FILTER,
+					GLES30.GL_NEAREST);
+			GLES30.glTexParameteri(target, GLES30.GL_TEXTURE_MAG_FILTER,
+					GLES30.GL_LINEAR);
 
-			if (target == GLES20.GL_TEXTURE_CUBE_MAP) {
-				GLES20.glTexImage2D(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0,
-						GLES20.GL_RGBA, mWidth, mHeight, 0, GLES20.GL_RGBA,
-						GLES20.GL_UNSIGNED_BYTE, null);
-				GLES20.glTexImage2D(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0,
-						GLES20.GL_RGBA, mWidth, mHeight, 0, GLES20.GL_RGBA,
-						GLES20.GL_UNSIGNED_BYTE, null);
-				GLES20.glTexImage2D(GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0,
-						GLES20.GL_RGBA, mWidth, mHeight, 0, GLES20.GL_RGBA,
-						GLES20.GL_UNSIGNED_BYTE, null);
-				GLES20.glTexImage2D(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0,
-						GLES20.GL_RGBA, mWidth, mHeight, 0, GLES20.GL_RGBA,
-						GLES20.GL_UNSIGNED_BYTE, null);
-				GLES20.glTexImage2D(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0,
-						GLES20.GL_RGBA, mWidth, mHeight, 0, GLES20.GL_RGBA,
-						GLES20.GL_UNSIGNED_BYTE, null);
-				GLES20.glTexImage2D(GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0,
-						GLES20.GL_RGBA, mWidth, mHeight, 0, GLES20.GL_RGBA,
-						GLES20.GL_UNSIGNED_BYTE, null);
+			if (target == GLES30.GL_TEXTURE_CUBE_MAP) {
+				GLES30.glTexParameteri(target, GLES30.GL_TEXTURE_WRAP_R,
+						GLES30.GL_CLAMP_TO_EDGE);
+				GLES30.glTexParameteri(target, GLES30.GL_TEXTURE_BASE_LEVEL, 0);
+				GLES30.glTexParameteri(target, GLES30.GL_TEXTURE_MAX_LEVEL, 0);
+
+				GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0,
+						GLES30.GL_RGBA8, mWidth, mHeight, 0, GLES30.GL_RGBA,
+						GLES30.GL_UNSIGNED_BYTE, null);
+				GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0,
+						GLES30.GL_RGBA8, mWidth, mHeight, 0, GLES30.GL_RGBA,
+						GLES30.GL_UNSIGNED_BYTE, null);
+				GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0,
+						GLES30.GL_RGBA8, mWidth, mHeight, 0, GLES30.GL_RGBA,
+						GLES30.GL_UNSIGNED_BYTE, null);
+				GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0,
+						GLES30.GL_RGBA8, mWidth, mHeight, 0, GLES30.GL_RGBA,
+						GLES30.GL_UNSIGNED_BYTE, null);
+				GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0,
+						GLES30.GL_RGBA8, mWidth, mHeight, 0, GLES30.GL_RGBA,
+						GLES30.GL_UNSIGNED_BYTE, null);
+				GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0,
+						GLES30.GL_RGBA8, mWidth, mHeight, 0, GLES30.GL_RGBA,
+						GLES30.GL_UNSIGNED_BYTE, null);
 			} else {
-				GLES20.glTexImage2D(target, 0, GLES20.GL_RGBA, mWidth, mHeight,
-						0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
+				GLES30.glTexImage2D(target, 0, GLES30.GL_RGBA8, mWidth,
+						mHeight, 0, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE,
+						null);
 			}
 		}
 
-		// Generate depth buffer.
-		if (genDepthBuffer) {
-			GLES20.glGenRenderbuffers(1, handle, 0);
+		// Generate depth and stencil buffer.
+		if (genDepthStencilBuffer) {
+			GLES30.glGenRenderbuffers(1, handle, 0);
 			mDepthBufferHandle = handle[0];
-			GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER,
+			GLES30.glBindRenderbuffer(GLES30.GL_RENDERBUFFER,
 					mDepthBufferHandle);
-			GLES20.glRenderbufferStorage(GLES20.GL_RENDERBUFFER,
-					GLES20.GL_DEPTH_COMPONENT16, width, height);
-			GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER,
-					GLES20.GL_DEPTH_ATTACHMENT, GLES20.GL_RENDERBUFFER,
+			GLES30.glRenderbufferStorage(GLES30.GL_RENDERBUFFER,
+					GLES30.GL_DEPTH24_STENCIL8, mWidth, mHeight);
+			GLES30.glFramebufferRenderbuffer(GLES30.GL_FRAMEBUFFER,
+					GLES30.GL_DEPTH_STENCIL_ATTACHMENT, GLES30.GL_RENDERBUFFER,
 					mDepthBufferHandle);
-		}
-		// Generate stencil buffer.
-		if (genStencilBuffer) {
-			GLES20.glGenRenderbuffers(1, handle, 0);
-			mStencilBufferHandle = handle[0];
-			GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER,
-					mStencilBufferHandle);
-			GLES20.glRenderbufferStorage(GLES20.GL_RENDERBUFFER,
-					GLES20.GL_STENCIL_INDEX8, width, height);
-			GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER,
-					GLES20.GL_STENCIL_ATTACHMENT, GLES20.GL_RENDERBUFFER,
-					mStencilBufferHandle);
 		}
 	}
 
@@ -199,12 +191,12 @@ public final class CubismFbo {
 	 */
 	public void reset() {
 		int[] handle = { mFrameBufferHandle };
-		GLES20.glDeleteFramebuffers(1, handle, 0);
+		GLES30.glDeleteFramebuffers(1, handle, 0);
 		handle[0] = mDepthBufferHandle;
-		GLES20.glDeleteRenderbuffers(1, handle, 0);
+		GLES30.glDeleteRenderbuffers(1, handle, 0);
 		handle[0] = mStencilBufferHandle;
-		GLES20.glDeleteRenderbuffers(1, handle, 0);
-		GLES20.glDeleteTextures(mTextureHandles.length, mTextureHandles, 0);
+		GLES30.glDeleteRenderbuffers(1, handle, 0);
+		GLES30.glDeleteTextures(mTextureHandles.length, mTextureHandles, 0);
 		mFrameBufferHandle = mDepthBufferHandle = mStencilBufferHandle = -1;
 		mTextureHandles = new int[0];
 	}
