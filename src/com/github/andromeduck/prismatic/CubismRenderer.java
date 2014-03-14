@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import fi.harism.cubism.R;
+import com.github.andromeduck.prismatic.R;
 
 import android.content.Context;
 import android.graphics.BitmapFactory;

@@ -1,4 +1,4 @@
-<!-- From: file:/home/james/temp/test/AndroidManifest.xml --><manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="5" android:versionName="2.0" package="fi.harism.cubism">
+<!-- From: file:/home/james/temp/test/AndroidManifest.xml --><manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="5" android:versionName="2.0" package="com.github.andromeduck.prismatic">
 
     <uses-sdk android:minSdkVersion="18" android:targetSdkVersion="19"/>
 

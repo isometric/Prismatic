@@ -16,7 +16,7 @@
 
 package com.github.andromeduck.prismatic;
 
-import fi.harism.cubism.R;
+import com.github.andromeduck.prismatic.R;
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.media.MediaPlayer;
