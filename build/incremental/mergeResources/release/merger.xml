@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merger>
+
+    <dataSet config="main" >
+        <source path="/home/james/temp/test/res" >
+            <file
+                name="script"
+                path="/home/james/temp/test/res/raw/script.xml"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="default_vs"
+                path="/home/james/temp/test/res/raw/default_vs.txt"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="depthmap_vs"
+                path="/home/james/temp/test/res/raw/depthmap_vs.txt"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="depth_vs"
+                path="/home/james/temp/test/res/raw/depth_vs.txt"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="img_heart"
+                path="/home/james/temp/test/res/raw/img_heart.png"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="stencil_mask_fs"
+                path="/home/james/temp/test/res/raw/stencil_mask_fs.txt"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="bloom_pass2_fs"
+                path="/home/james/temp/test/res/raw/bloom_pass2_fs.txt"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="img_cubism"
+                path="/home/james/temp/test/res/raw/img_cubism.png"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="stencil_vs"
+                path="/home/james/temp/test/res/raw/stencil_vs.txt"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="music"
+                path="/home/james/temp/test/res/raw/music.mp3"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="depth_fs"
+                path="/home/james/temp/test/res/raw/depth_fs.txt"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="bloom_pass3_fs"
+                path="/home/james/temp/test/res/raw/bloom_pass3_fs.txt"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="stencil_fs"
+                path="/home/james/temp/test/res/raw/stencil_fs.txt"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="img_jinny"
+                path="/home/james/temp/test/res/raw/img_jinny.png"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="bloom_vs"
+                path="/home/james/temp/test/res/raw/bloom_vs.txt"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="stencil_mask_vs"
+                path="/home/james/temp/test/res/raw/stencil_mask_vs.txt"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="img_harism"
+                path="/home/james/temp/test/res/raw/img_harism.png"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="depthmap_fs"
+                path="/home/james/temp/test/res/raw/depthmap_fs.txt"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="bloom_pass1_fs"
+                path="/home/james/temp/test/res/raw/bloom_pass1_fs.txt"
+                qualifiers=""
+                type="raw" />
+            <file
+                name="default_fs"
+                path="/home/james/temp/test/res/raw/default_fs.txt"
+                qualifiers=""
+                type="raw" />
+            <file
+                path="/home/james/temp/test/res/values/strings.xml"
+                qualifiers="" >
+                <string name="app_name" >Cubism
+                </string>
+                <string name="error_shader_compiler" >OpenGL error; GLSL shader compiler not supported.
+                </string>
+            </file>
+            <file
+                name="ic_launcher"
+                path="/home/james/temp/test/res/drawable/ic_launcher.png"
+                qualifiers=""
+                type="drawable" />
+        </source>
+        <source path="/home/james/temp/test/build/res/rs/release" />
+        <source path="/home/james/temp/test/build/res/generated/release" />
+    </dataSet>
+    <dataSet config="release" >
+        <source path="/home/james/temp/test/build-types/release/res" />
+    </dataSet>
+
+</merger>

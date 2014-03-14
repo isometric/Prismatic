@@ -1,0 +1,13 @@
+
+uniform mat4 uModelM;
+uniform mat4 uViewM;
+uniform mat4 uProjM;
+
+attribute vec3 aPosition;
+
+varying vec4 vPosition;
+
+void main() {
+	vPosition = uViewM * (uModelM * vec4(aPosition, 1.0));
+	gl_Position = uProjM * vPosition;
+}
