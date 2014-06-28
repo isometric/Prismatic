@@ -1,7 +1,7 @@
 <resources>
 
     <!-- General strings -->
-    <string name="app_name">Prismatic</string>
+    <string name="app_name">Cubism</string>
     
     <!-- Error strings -->
     <string name="error_shader_compiler">OpenGL error; GLSL shader compiler not supported.</string>
