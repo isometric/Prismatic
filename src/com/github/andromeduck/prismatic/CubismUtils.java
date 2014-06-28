@@ -1,5 +1,5 @@
 /*
-   Copyright 2012 Harri Smatt
+   Copyright 2014 James Deng
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -52,13 +52,13 @@ public final class CubismUtils {
 	 * intact. Also T is written into lowest row of destination matrix instead
 	 * of last column.
 	 * 
-	 * @param dst
+	 * //@param dst
 	 *            Destination matrix
-	 * @param dstOffset
+	 * //@param dstOffset
 	 *            Destination matrix offset
-	 * @param src
+	 * //@param src
 	 *            Source matrix
-	 * @param srcOffset
+	 * //@param srcOffset
 	 *            Source matrix offset
 	 */
 	public static void invTransposeM(float[] dst, float[] src) {

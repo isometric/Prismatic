@@ -1,5 +1,5 @@
 /*
-   Copyright 2012 Harri Smatt
+   Copyright 2014 James Deng
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -44,8 +44,7 @@ public class MainActivity extends Activity {
 		// Create media player object.
 		mMediaPlayer = MediaPlayer.create(this, R.raw.music);
 		mMediaPlayer.setLooping(false);
-		mMediaPlayer
-				.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+		mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
 					@Override
 					public void onCompletion(MediaPlayer mp) {
 						MainActivity.this.finish();

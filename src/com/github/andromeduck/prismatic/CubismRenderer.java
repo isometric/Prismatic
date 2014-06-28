@@ -35,8 +35,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
 
-public final class CubismRenderer extends GLSurfaceView implements
-		GLSurfaceView.Renderer {
+public final class CubismRenderer extends GLSurfaceView implements GLSurfaceView.Renderer {
 
 	private final AnimationRunnable mAnimationRunnable = new AnimationRunnable();
 	private ByteBuffer mBufferQuad;
@@ -70,8 +69,7 @@ public final class CubismRenderer extends GLSurfaceView implements
 	private final CubismCube mSkybox = new CubismCube();
 	private int mWidth, mHeight;
 
-	public CubismRenderer(Context context, CubismParser parser,
-			MediaPlayer mediaPlayer) {
+	public CubismRenderer(Context context, CubismParser parser, MediaPlayer mediaPlayer) {
 		super(context);
 
 		mContext = context;
@@ -98,7 +96,7 @@ public final class CubismRenderer extends GLSurfaceView implements
 		mModels[4] = new CubismModelBitmap(BitmapFactory.decodeStream(mContext
 				.getResources().openRawResource(R.raw.img_harism)));
 		mModels[5] = new CubismModelBitmap(BitmapFactory.decodeStream(mContext
-				.getResources().openRawResource(R.raw.img_heart)));
+                .getResources().openRawResource(R.raw.img_heart)));
 		mModels[6] = new CubismModelBitmap(BitmapFactory.decodeStream(mContext
 				.getResources().openRawResource(R.raw.img_jinny)));
 		mModels[7] = new CubismModelExplosionShadowVolume(6);
