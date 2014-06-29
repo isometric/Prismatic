@@ -14,7 +14,7 @@
    limitations under the License.
  */
 
-package com.github.andromeduck.prismatic;
+package com.github.andromeduck.prismatic.graphics;
 
 import java.util.HashMap;
 
@@ -24,7 +24,7 @@ import android.util.Log;
 /**
  * Helper class for handling shaders.
  */
-public final class CubismShader {
+public final class ShaderManager {
 
 	// Shader program handles.
 	private int mIdProgram = 0;

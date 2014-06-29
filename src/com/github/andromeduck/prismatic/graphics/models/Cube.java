@@ -14,13 +14,15 @@
    limitations under the License.
  */
 
-package com.github.andromeduck.prismatic;
+package com.github.andromeduck.prismatic.graphics.models;
 
 import java.nio.ByteBuffer;
 
 import android.opengl.Matrix;
 
-public class CubismCube {
+import com.github.andromeduck.prismatic.graphics.MathUtils;
+
+public class Cube {
 
 	private static ByteBuffer mBufferNormals;
 	private static ByteBuffer mBufferNormalsInv;
@@ -130,9 +132,9 @@ public class CubismCube {
 	private final float[] mMatrixTranslate = new float[16];
 	private boolean mRecalculate;
 
-	public CubismCube() {
-		Matrix.setIdentityM(mMatrixRotate, 0);
-		Matrix.setIdentityM(mMatrixScale, 0);
+    public Cube() {
+        Matrix.setIdentityM(mMatrixRotate, 0);
+        Matrix.setIdentityM(mMatrixScale, 0);
 		Matrix.setIdentityM(mMatrixTranslate, 0);
 		Matrix.setIdentityM(mMatrixModel, 0);
 		mBoundingSphere[3] = SQRT_2;
@@ -164,9 +166,9 @@ public class CubismCube {
 	}
 
 	public void setRotate(float rx, float ry, float rz) {
-		CubismUtils.setRotateM(mMatrixRotate, rx, ry, rz);
-		mRecalculate = true;
-	}
+        MathUtils.setRotateM(mMatrixRotate, rx, ry, rz);
+        mRecalculate = true;
+    }
 
 	public void setScale(float scale) {
 		Matrix.setIdentityM(mMatrixScale, 0);

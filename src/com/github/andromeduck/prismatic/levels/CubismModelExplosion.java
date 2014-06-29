@@ -14,14 +14,17 @@
    limitations under the License.
  */
 
-package com.github.andromeduck.prismatic;
+package com.github.andromeduck.prismatic.levels;
 
 import java.util.Arrays;
 import java.util.Comparator;
 
 import android.util.FloatMath;
 
-public class CubismModelExplosion implements CubismRenderer.Model {
+import com.github.andromeduck.prismatic.graphics.GraphicsManager;
+import com.github.andromeduck.prismatic.graphics.MathUtils;
+
+public class CubismModelExplosion implements GraphicsManager.Model {
 
 	private Cube[] mCubes;
 
@@ -89,9 +92,9 @@ public class CubismModelExplosion implements CubismRenderer.Model {
 	}
 
 	@Override
-	public CubismCube[] getCubes() {
-		return mCubes;
-	}
+    public com.github.andromeduck.prismatic.graphics.models.Cube[] getCubes() {
+        return mCubes;
+    }
 
 	@Override
 	public int getRenderMode() {
@@ -106,10 +109,10 @@ public class CubismModelExplosion implements CubismRenderer.Model {
 
 			Cube cube = mCubes[i];
 
-			CubismUtils.interpolateV(cube.mPosition, cube.mPositionSource,
-					cube.mPositionTarget, tt);
-			CubismUtils.interpolateV(cube.mRotation, cube.mRotationSource,
-					cube.mRotationTarget, tt);
+            MathUtils.interpolateV(cube.mPosition, cube.mPositionSource,
+                    cube.mPositionTarget, tt);
+            MathUtils.interpolateV(cube.mRotation, cube.mRotationSource,
+                    cube.mRotationTarget, tt);
 
 			cube.setTranslate(cube.mPosition[0], cube.mPosition[1],
 					cube.mPosition[2]);
@@ -118,9 +121,9 @@ public class CubismModelExplosion implements CubismRenderer.Model {
 		}
 	}
 
-	private class Cube extends CubismCube {
-		public float mDistanceFromGravity;
-		public final float[] mPosition = new float[3];
+    private class Cube extends com.github.andromeduck.prismatic.graphics.models.Cube {
+        public float mDistanceFromGravity;
+        public final float[] mPosition = new float[3];
 		public final float[] mPositionSource = new float[3];
 		public final float[] mPositionTarget = new float[3];
 		public final float[] mRotation = new float[3];

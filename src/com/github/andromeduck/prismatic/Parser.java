@@ -16,6 +16,8 @@
 
 package com.github.andromeduck.prismatic;
 
+import com.github.andromeduck.prismatic.graphics.MathUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Vector;
@@ -28,7 +30,7 @@ import org.xml.sax.AttributeList;
 import org.xml.sax.HandlerBase;
 import org.xml.sax.SAXException;
 
-public final class CubismParser {
+public final class Parser {
 
 	private static final int INTERPOLATION_HERMITE = 1;
 	private static final int INTERPOLATION_LINEAR = 0;
@@ -40,9 +42,9 @@ public final class CubismParser {
 	private final Vector<StructVector> mModels = new Vector<StructVector>();
 	private final float[] mModelT = new float[1];
 
-	public CubismParser(InputStream is) throws SAXException, IOException,
-			ParserConfigurationException {
-		SAXParserFactory factory = SAXParserFactory.newInstance();
+    public Parser(InputStream is) throws SAXException, IOException,
+            ParserConfigurationException {
+        SAXParserFactory factory = SAXParserFactory.newInstance();
 		SAXParser parser = factory.newSAXParser();
 		parser.parse(is, new XMLHandler());
 	}
@@ -97,12 +99,12 @@ public final class CubismParser {
 			float t = calculateT(vector, time);
 
 			if (vector.mCtrl2.length > 0) {
-				CubismUtils.interpolateV(out, vector.mCtrl0, vector.mCtrl1,
-						vector.mCtrl2, t);
-			} else if (vector.mCtrl1.length > 0) {
-				CubismUtils.interpolateV(out, vector.mCtrl0, vector.mCtrl1, t);
-			} else {
-				for (int i = 0; i < vector.mCtrl0.length; ++i) {
+                MathUtils.interpolateV(out, vector.mCtrl0, vector.mCtrl1,
+                        vector.mCtrl2, t);
+            } else if (vector.mCtrl1.length > 0) {
+                MathUtils.interpolateV(out, vector.mCtrl0, vector.mCtrl1, t);
+            } else {
+                for (int i = 0; i < vector.mCtrl0.length; ++i) {
 					out[i] = vector.mCtrl0[i];
 				}
 			}

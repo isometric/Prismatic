@@ -14,12 +14,12 @@
    limitations under the License.
  */
 
-package com.github.andromeduck.prismatic;
+package com.github.andromeduck.prismatic.graphics;
 
 import android.opengl.Matrix;
 import android.util.FloatMath;
 
-public final class CubismUtils {
+public final class MathUtils {
 
 	public static void interpolateV(float[] out, float[] p0, float[] p1, float t) {
 		int len = Math.min(p0.length, p1.length);

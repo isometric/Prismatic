@@ -14,7 +14,7 @@
    limitations under the License.
  */
 
-package com.github.andromeduck.prismatic;
+package com.github.andromeduck.prismatic.graphics;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -24,6 +24,13 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import com.github.andromeduck.prismatic.R;
+import com.github.andromeduck.prismatic.graphics.models.Cube;
+import com.github.andromeduck.prismatic.levels.CubismModelBasic;
+import com.github.andromeduck.prismatic.levels.CubismModelBitmap;
+import com.github.andromeduck.prismatic.levels.CubismModelExplosion;
+import com.github.andromeduck.prismatic.levels.CubismModelExplosionShadowVolume;
+import com.github.andromeduck.prismatic.levels.CubismModelRandom;
+import com.github.andromeduck.prismatic.Parser;
 
 import android.content.Context;
 import android.graphics.BitmapFactory;
@@ -35,16 +42,16 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
 
-public final class CubismRenderer extends GLSurfaceView implements GLSurfaceView.Renderer {
+public final class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Renderer {
 
 	private final AnimationRunnable mAnimationRunnable = new AnimationRunnable();
 	private ByteBuffer mBufferQuad;
 	private Context mContext;
-	private final CubismFbo mFboCubeMap = new CubismFbo();
-	private final CubismFbo mFboFull = new CubismFbo();
-	private final CubismFbo mFboQuarter = new CubismFbo();
-	private int mInitCounter;
-	private final float[] mMatrixExtrude = new float[16];
+    private final FBO mFboCubeMap = new FBO();
+    private final FBO mFboFull = new FBO();
+    private final FBO mFboQuarter = new FBO();
+    private int mInitCounter;
+    private final float[] mMatrixExtrude = new float[16];
 	private final float[] mMatrixProjection = new float[16];
 	private final float[] mMatrixProjectionDepth = new float[16];
 	private final float[] mMatrixRotate = new float[16];
@@ -54,23 +61,23 @@ public final class CubismRenderer extends GLSurfaceView implements GLSurfaceView
 	private final float[] mMatrixViewProjection = new float[16];
 	private MediaPlayer mMediaPlayer;
 	private final Model[] mModels;
-	private CubismParser mParser;
-	private final CubismParser.Data mParserData = new CubismParser.Data();
-	private final float[] mPlanes = new float[24];
-	private final CubismShader mShaderBloom1 = new CubismShader();
-	private final CubismShader mShaderBloom2 = new CubismShader();
-	private final CubismShader mShaderBloom3 = new CubismShader();
-	private final boolean[] mShaderCompilerSupport = new boolean[1];
-	private final CubismShader mShaderDefault = new CubismShader();
-	private final CubismShader mShaderDepth = new CubismShader();
-	private final CubismShader mShaderDepthMap = new CubismShader();
-	private final CubismShader mShaderStencil = new CubismShader();
-	private final CubismShader mShaderStencilMask = new CubismShader();
-	private final CubismCube mSkybox = new CubismCube();
-	private int mWidth, mHeight;
+    private Parser mParser;
+    private final Parser.Data mParserData = new Parser.Data();
+    private final float[] mPlanes = new float[24];
+    private final ShaderManager mShaderBloom1 = new ShaderManager();
+    private final ShaderManager mShaderBloom2 = new ShaderManager();
+    private final ShaderManager mShaderBloom3 = new ShaderManager();
+    private final boolean[] mShaderCompilerSupport = new boolean[1];
+    private final ShaderManager mShaderDefault = new ShaderManager();
+    private final ShaderManager mShaderDepth = new ShaderManager();
+    private final ShaderManager mShaderDepthMap = new ShaderManager();
+    private final ShaderManager mShaderStencil = new ShaderManager();
+    private final ShaderManager mShaderStencilMask = new ShaderManager();
+    private final Cube mSkybox = new Cube();
+    private int mWidth, mHeight;
 
-	public CubismRenderer(Context context, CubismParser parser, MediaPlayer mediaPlayer) {
-		super(context);
+    public GraphicsManager(Context context, Parser parser, MediaPlayer mediaPlayer) {
+        super(context);
 
 		mContext = context;
 		mParser = parser;
@@ -88,9 +95,9 @@ public final class CubismRenderer extends GLSurfaceView implements GLSurfaceView
 		mSkybox.setScale(-10f);
 
 		mModels = new Model[8];
-		mModels[0] = new CubismModelBasic();
-		mModels[1] = new CubismModelExplosion(10);
-		mModels[2] = new CubismModelRandom(6);
+        mModels[0] = new CubismModelExplosion(10);
+        mModels[1] = new CubismModelExplosion(10);
+        mModels[2] = new CubismModelRandom(6);
 		mModels[3] = new CubismModelBitmap(BitmapFactory.decodeStream(mContext
 				.getResources().openRawResource(R.raw.img_cubism)));
 		mModels[4] = new CubismModelBitmap(BitmapFactory.decodeStream(mContext
@@ -181,11 +188,11 @@ public final class CubismRenderer extends GLSurfaceView implements GLSurfaceView
 		}
 		case 3: {
 			float aspectR = (float) mWidth / mHeight;
-			CubismUtils.setPerspectiveM(mMatrixProjection, 45f, aspectR, .1f,
-					40f);
-			CubismUtils.setPerspectiveM(mMatrixProjectionDepth, 90f, 1f, .1f,
-					40f);
-			CubismUtils.setExtrudeM(mMatrixExtrude, 45f, aspectR, .1f);
+            MathUtils.setPerspectiveM(mMatrixProjection, 45f, aspectR, .1f,
+                    40f);
+            MathUtils.setPerspectiveM(mMatrixProjectionDepth, 90f, 1f, .1f,
+                    40f);
+            MathUtils.setExtrudeM(mMatrixExtrude, 45f, aspectR, .1f);
 
 			mFboCubeMap.init(512, 512, GLES30.GL_TEXTURE_CUBE_MAP, 1, true);
 			mFboQuarter.init(mWidth / 4, mHeight / 4, 2);
@@ -355,39 +362,39 @@ public final class CubismRenderer extends GLSurfaceView implements GLSurfaceView
 		// Render shadow map forward.
 		mFboCubeMap.bindTexture(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0);
 		GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
-		CubismUtils.setRotateM(mMatrixRotate, 0f, 0f, 180f);
-		renderDepthMapFace(mMatrixRotate);
+        MathUtils.setRotateM(mMatrixRotate, 0f, 0f, 180f);
+        renderDepthMapFace(mMatrixRotate);
 
 		// Render shadow map right.
 		mFboCubeMap.bindTexture(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0);
 		GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
-		CubismUtils.setRotateM(mMatrixRotate, 0f, 90f, 180f);
-		renderDepthMapFace(mMatrixRotate);
+        MathUtils.setRotateM(mMatrixRotate, 0f, 90f, 180f);
+        renderDepthMapFace(mMatrixRotate);
 
 		// Render shadow map back.
 		mFboCubeMap.bindTexture(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0);
 		GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
-		CubismUtils.setRotateM(mMatrixRotate, 0f, 180f, 180f);
-		renderDepthMapFace(mMatrixRotate);
+        MathUtils.setRotateM(mMatrixRotate, 0f, 180f, 180f);
+        renderDepthMapFace(mMatrixRotate);
 
 		// Render shadow map left.
 		mFboCubeMap.bindTexture(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0);
 		GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
-		CubismUtils.setRotateM(mMatrixRotate, 0f, -90f, 180f);
-		renderDepthMapFace(mMatrixRotate);
+        MathUtils.setRotateM(mMatrixRotate, 0f, -90f, 180f);
+        renderDepthMapFace(mMatrixRotate);
 
 		// Render shadow map down.
 		mFboCubeMap.bindTexture(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0);
 		GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
-		CubismUtils.setRotateM(mMatrixRotate, -90f, 0f, 0f);
-		renderDepthMapFace(mMatrixRotate);
+        MathUtils.setRotateM(mMatrixRotate, -90f, 0f, 0f);
+        renderDepthMapFace(mMatrixRotate);
 
 		// Render shadow map up.
 		mFboCubeMap.bindTexture(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0);
 		GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
-		CubismUtils.setRotateM(mMatrixRotate, 90f, 0f, 0f);
-		renderDepthMapFace(mMatrixRotate);
-	}
+        MathUtils.setRotateM(mMatrixRotate, 90f, 0f, 0f);
+        renderDepthMapFace(mMatrixRotate);
+    }
 
 	public void renderDepthMapFace(float[] viewRotateM) {
 		// Render filled cube.
@@ -405,18 +412,18 @@ public final class CubismRenderer extends GLSurfaceView implements GLSurfaceView
 		GLES30.glUniformMatrix4fv(uProjM, 1, false, mMatrixProjectionDepth, 0);
 
 		GLES30.glVertexAttribPointer(aPosition, 3, GLES30.GL_BYTE, false, 0,
-				CubismCube.getVertices());
-		GLES30.glEnableVertexAttribArray(aPosition);
+                Cube.getVertices());
+        GLES30.glEnableVertexAttribArray(aPosition);
 
 		GLES30.glEnable(GLES30.GL_CULL_FACE);
 		GLES30.glEnable(GLES30.GL_DEPTH_TEST);
 
 		Matrix.multiplyMM(mMatrixViewProjection, 0, mMatrixProjectionDepth, 0,
 				mMatrixViewProjection, 0);
-		CubismVisibility.extractPlanes(mMatrixViewProjection, mPlanes);
+        Visibility.extractPlanes(mMatrixViewProjection, mPlanes);
 
-        for (CubismCube cube : mModels[mParserData.mModelId].getCubes()) {
-            if (CubismVisibility.intersects(mPlanes, cube.getBoundingSphere())) {
+        for (Cube cube : mModels[mParserData.mModelId].getCubes()) {
+            if (Visibility.intersects(mPlanes, cube.getBoundingSphere())) {
                 GLES30.glUniformMatrix4fv(uModelM, 1, false, cube.getModelM(), 0);
                 GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
 			}
@@ -430,9 +437,9 @@ public final class CubismRenderer extends GLSurfaceView implements GLSurfaceView
 	}
 
 	public void renderScene(int renderMode) {
-		CubismShader shader;
-		if (renderMode == Model.MODE_SHADOWMAP) {
-			shader = mShaderDepthMap;
+        ShaderManager shader;
+        if (renderMode == Model.MODE_SHADOWMAP) {
+            shader = mShaderDepthMap;
 		} else {
 			shader = mShaderDefault;
 		}
@@ -449,12 +456,12 @@ public final class CubismRenderer extends GLSurfaceView implements GLSurfaceView
 		GLES30.glUniform3fv(uLightPos, 1, mParserData.mLightPosition, 0);
 
 		GLES30.glVertexAttribPointer(aPosition, 3, GLES30.GL_BYTE, false, 0,
-				CubismCube.getVertices());
-		GLES30.glEnableVertexAttribArray(aPosition);
+                Cube.getVertices());
+        GLES30.glEnableVertexAttribArray(aPosition);
 
 		GLES30.glVertexAttribPointer(aNormal, 3, GLES30.GL_BYTE, false, 0,
-				CubismCube.getNormals());
-		GLES30.glEnableVertexAttribArray(aNormal);
+                Cube.getNormals());
+        GLES30.glEnableVertexAttribArray(aNormal);
 
 		if (renderMode == Model.MODE_SHADOWMAP) {
 			GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
@@ -471,10 +478,10 @@ public final class CubismRenderer extends GLSurfaceView implements GLSurfaceView
 
 		Matrix.multiplyMM(mMatrixViewProjection, 0, mMatrixProjection, 0,
 				mMatrixView, 0);
-		CubismVisibility.extractPlanes(mMatrixViewProjection, mPlanes);
+        Visibility.extractPlanes(mMatrixViewProjection, mPlanes);
 
-        for (CubismCube cube : mModels[mParserData.mModelId].getCubes()) {
-            if (CubismVisibility.intersects(mPlanes, cube.getBoundingSphere())) {
+        for (Cube cube : mModels[mParserData.mModelId].getCubes()) {
+            if (Visibility.intersects(mPlanes, cube.getBoundingSphere())) {
                 GLES30.glUniformMatrix4fv(uModelM, 1, false, cube.getModelM(), 0);
                 GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
 			}
@@ -484,8 +491,8 @@ public final class CubismRenderer extends GLSurfaceView implements GLSurfaceView
 		GLES30.glUniform3f(uColor, .5f, .5f, .5f);
 
 		GLES30.glVertexAttribPointer(aNormal, 3, GLES30.GL_BYTE, false, 0,
-				CubismCube.getNormalsInv());
-		GLES30.glEnableVertexAttribArray(aNormal);
+                Cube.getNormalsInv());
+        GLES30.glEnableVertexAttribArray(aNormal);
 
 		GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
 
@@ -509,12 +516,12 @@ public final class CubismRenderer extends GLSurfaceView implements GLSurfaceView
 		GLES30.glUniform3fv(uLightPosition, 1, mParserData.mLightPosition, 0);
 
 		GLES30.glVertexAttribPointer(aPosition, 4, GLES30.GL_BYTE, false, 0,
-				CubismCube.getVerticesShadow());
-		GLES30.glEnableVertexAttribArray(aPosition);
+                Cube.getVerticesShadow());
+        GLES30.glEnableVertexAttribArray(aPosition);
 
 		GLES30.glVertexAttribPointer(aNormal, 3, GLES30.GL_BYTE, false, 0,
-				CubismCube.getNormalsShadow());
-		GLES30.glEnableVertexAttribArray(aNormal);
+                Cube.getNormalsShadow());
+        GLES30.glEnableVertexAttribArray(aNormal);
 
 		GLES30.glDisable(GLES30.GL_CULL_FACE);
 		GLES30.glEnable(GLES30.GL_DEPTH_TEST);
@@ -537,8 +544,8 @@ public final class CubismRenderer extends GLSurfaceView implements GLSurfaceView
 		GLES30.glStencilOpSeparate(GLES30.GL_BACK, GLES30.GL_KEEP,
 				GLES30.GL_KEEP, GLES30.GL_DECR_WRAP);
 
-		CubismCube[] cubes = mModels[mParserData.mModelId].getCubes();
-        for (CubismCube cube : mModels[mParserData.mModelId].getCubes()) {
+        Cube[] cubes = mModels[mParserData.mModelId].getCubes();
+        for (Cube cube : mModels[mParserData.mModelId].getCubes()) {
             GLES30.glUniformMatrix4fv(uModelM, 1, false, cube.getModelM(), 0);
             GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 24);
 		}
@@ -586,7 +593,7 @@ public final class CubismRenderer extends GLSurfaceView implements GLSurfaceView
 		public static final int MODE_SHADOWMAP = 1;
 		public static final int MODE_SHADOWVOLUME = 2;
 
-		public CubismCube[] getCubes();
+        public Cube[] getCubes();
 
 		public int getRenderMode();
 

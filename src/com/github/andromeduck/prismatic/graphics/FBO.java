@@ -14,14 +14,14 @@
    limitations under the License.
  */
 
-package com.github.andromeduck.prismatic;
+package com.github.andromeduck.prismatic.graphics;
 
 import android.opengl.GLES30;
 
 /**
  * Helper class for handling frame buffer objects.
  */
-public final class CubismFbo {
+public final class FBO {
 
 	// Optional depth buffer handle.
 	private int mDepthBufferHandle = -1;

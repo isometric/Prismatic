@@ -16,7 +16,8 @@
 
 package com.github.andromeduck.prismatic;
 
-import com.github.andromeduck.prismatic.R;
+import com.github.andromeduck.prismatic.graphics.GraphicsManager;
+
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.media.MediaPlayer;
@@ -29,7 +30,7 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
 
 	private MediaPlayer mMediaPlayer;
-	private CubismRenderer mRenderer;
+    private GraphicsManager mRenderer;
 
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
@@ -51,11 +52,11 @@ public class MainActivity extends Activity {
 					}
 				});
 
-		CubismParser parser;
-		try {
-			parser = new CubismParser(getResources().openRawResource(
-					R.raw.script));
-		} catch (Exception ex) {
+        Parser parser;
+        try {
+            parser = new Parser(getResources().openRawResource(
+                    R.raw.script));
+        } catch (Exception ex) {
 			ex.printStackTrace();
 			Toast.makeText(this, ex.getMessage(), Toast.LENGTH_LONG).show();
 			finish();
@@ -63,8 +64,8 @@ public class MainActivity extends Activity {
 		}
 
 		// Create GLSurfaceView.
-		mRenderer = new CubismRenderer(this, parser, mMediaPlayer);
-		setContentView(mRenderer);
+        mRenderer = new GraphicsManager(this, parser, mMediaPlayer);
+        setContentView(mRenderer);
 
 		mRenderer.setOnTouchListener(new View.OnTouchListener() {
 			float mPositionX;

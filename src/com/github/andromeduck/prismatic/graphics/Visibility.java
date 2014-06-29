@@ -14,11 +14,11 @@
    limitations under the License.
  */
 
-package com.github.andromeduck.prismatic;
+package com.github.andromeduck.prismatic.graphics;
 
 import android.util.FloatMath;
 
-public final class CubismVisibility {
+public final class Visibility {
 
 	public static void extractPlanes(float[] mvp, float[] result) {
 		// Right

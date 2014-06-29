@@ -14,24 +14,17 @@
    limitations under the License.
  */
 
-package com.github.andromeduck.prismatic;
+package com.github.andromeduck.prismatic.levels;
 
-public class CubismModelBasic implements CubismRenderer.Model {
+public class CubismModelExplosionShadowVolume extends CubismModelExplosion {
 
-	private final CubismCube[] mCubes = { new CubismCube() };
+    public CubismModelExplosionShadowVolume(int cubeSize) {
+        super(cubeSize);
+    }
 
-	@Override
-	public CubismCube[] getCubes() {
-		return mCubes;
-	}
-
-	@Override
-	public int getRenderMode() {
-		return MODE_SHADOWMAP;
-	}
-
-	@Override
-	public void setInterpolation(float t) {
-	}
+    @Override
+    public int getRenderMode() {
+        return MODE_SHADOWVOLUME;
+    }
 
 }
