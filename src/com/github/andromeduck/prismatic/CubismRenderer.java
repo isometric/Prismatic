@@ -415,13 +415,10 @@ public final class CubismRenderer extends GLSurfaceView implements GLSurfaceView
 				mMatrixViewProjection, 0);
 		CubismVisibility.extractPlanes(mMatrixViewProjection, mPlanes);
 
-		CubismCube[] cubes = mModels[mParserData.mModelId].getCubes();
-		for (int i = 0; i < cubes.length; ++i) {
-			if (CubismVisibility.intersects(mPlanes,
-					cubes[i].getBoundingSphere())) {
-				GLES30.glUniformMatrix4fv(uModelM, 1, false,
-						cubes[i].getModelM(), 0);
-				GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
+        for (CubismCube cube : mModels[mParserData.mModelId].getCubes()) {
+            if (CubismVisibility.intersects(mPlanes, cube.getBoundingSphere())) {
+                GLES30.glUniformMatrix4fv(uModelM, 1, false, cube.getModelM(), 0);
+                GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
 			}
 		}
 
@@ -476,13 +473,10 @@ public final class CubismRenderer extends GLSurfaceView implements GLSurfaceView
 				mMatrixView, 0);
 		CubismVisibility.extractPlanes(mMatrixViewProjection, mPlanes);
 
-		CubismCube[] cubes = mModels[mParserData.mModelId].getCubes();
-		for (int i = 0; i < cubes.length; ++i) {
-			if (CubismVisibility.intersects(mPlanes,
-					cubes[i].getBoundingSphere())) {
-				GLES30.glUniformMatrix4fv(uModelM, 1, false,
-						cubes[i].getModelM(), 0);
-				GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
+        for (CubismCube cube : mModels[mParserData.mModelId].getCubes()) {
+            if (CubismVisibility.intersects(mPlanes, cube.getBoundingSphere())) {
+                GLES30.glUniformMatrix4fv(uModelM, 1, false, cube.getModelM(), 0);
+                GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
 			}
 		}
 
@@ -544,10 +538,9 @@ public final class CubismRenderer extends GLSurfaceView implements GLSurfaceView
 				GLES30.GL_KEEP, GLES30.GL_DECR_WRAP);
 
 		CubismCube[] cubes = mModels[mParserData.mModelId].getCubes();
-		for (int i = 0; i < cubes.length; ++i) {
-			GLES30.glUniformMatrix4fv(uModelM, 1, false, cubes[i].getModelM(),
-					0);
-			GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 24);
+        for (CubismCube cube : mModels[mParserData.mModelId].getCubes()) {
+            GLES30.glUniformMatrix4fv(uModelM, 1, false, cube.getModelM(), 0);
+            GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 24);
 		}
 
 		GLES30.glDepthMask(true);
