@@ -24,7 +24,7 @@ import android.util.Log;
 /**
  * Helper class for handling shaders.
  */
-public final class ShaderManager {
+public final class Shader {
 
 	// Shader program handles.
 	private int mIdProgram = 0;

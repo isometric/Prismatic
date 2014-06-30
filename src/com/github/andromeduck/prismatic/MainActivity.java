@@ -25,7 +25,6 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
-import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
@@ -52,19 +51,9 @@ public class MainActivity extends Activity {
 					}
 				});
 
-        Parser parser;
-        try {
-            parser = new Parser(getResources().openRawResource(
-                    R.raw.script));
-        } catch (Exception ex) {
-			ex.printStackTrace();
-			Toast.makeText(this, ex.getMessage(), Toast.LENGTH_LONG).show();
-			finish();
-			return;
-		}
 
 		// Create GLSurfaceView.
-        mRenderer = new GraphicsManager(this, parser, mMediaPlayer);
+        mRenderer = new GraphicsManager(this, mMediaPlayer);
         setContentView(mRenderer);
 
 		mRenderer.setOnTouchListener(new View.OnTouchListener() {
