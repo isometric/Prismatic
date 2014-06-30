@@ -19,7 +19,7 @@ package com.github.andromeduck.prismatic.levels;
 import com.github.andromeduck.prismatic.graphics.models.Cube;
 import com.github.andromeduck.prismatic.graphics.GraphicsManager;
 
-public abstract class CubismModelBasic implements GraphicsManager.Model {
+public class CubismModelBasic implements GraphicsManager.Model {
 
     private final Cube[] mCubes = {new Cube()};
 
