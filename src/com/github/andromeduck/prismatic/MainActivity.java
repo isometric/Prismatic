@@ -16,7 +16,7 @@
 
 package com.github.andromeduck.prismatic;
 
-import com.github.andromeduck.prismatic.graphics.GraphicsManager;
+import com.github.andromeduck.prismatic.graphics.SceneManager;
 
 import android.app.Activity;
 import android.content.res.Configuration;
@@ -28,8 +28,8 @@ import android.view.Window;
 
 public class MainActivity extends Activity {
 
-	private MediaPlayer mMediaPlayer;
-    private GraphicsManager mRenderer;
+    private MediaPlayer mediaPlayer;
+    private SceneManager sceneManager;
 
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
@@ -42,64 +42,65 @@ public class MainActivity extends Activity {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 
 		// Create media player object.
-		mMediaPlayer = MediaPlayer.create(this, R.raw.music);
-		mMediaPlayer.setLooping(false);
-		mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-					@Override
-					public void onCompletion(MediaPlayer mp) {
-						MainActivity.this.finish();
-					}
-				});
+        mediaPlayer = MediaPlayer.create(this, R.raw.music);
+        mediaPlayer.setLooping(false);
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                MainActivity.this.finish();
+            }
+        });
 
 
 		// Create GLSurfaceView.
-        mRenderer = new GraphicsManager(this, mMediaPlayer);
-        setContentView(mRenderer);
+        sceneManager = new SceneManager(this, mediaPlayer);
+        setContentView(sceneManager);
 
-		mRenderer.setOnTouchListener(new View.OnTouchListener() {
-			float mPositionX;
+        sceneManager.setOnTouchListener(new View.OnTouchListener() {
+            float mPositionX;
 
-			@Override
-			public boolean onTouch(View v, MotionEvent event) {
-				switch (event.getAction()) {
-				case MotionEvent.ACTION_DOWN:
-					mPositionX = event.getX();
-					break;
-				case MotionEvent.ACTION_MOVE:
-					int diff = (int) ((mPositionX - event.getX()) * 100.0f);
-					int newPos = mMediaPlayer.getCurrentPosition() + diff;
-					if (newPos < 0) {
-						newPos = 0;
-					}
-					if (newPos >= mMediaPlayer.getDuration()) {
-						newPos = mMediaPlayer.getDuration();
-					}
-					mMediaPlayer.seekTo(newPos);
-					mPositionX = event.getX();
-				}
-				return true;
-			}
-		});
-	}
+            // TODO: implement virtual joystick like behaviour
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        mPositionX = event.getX();
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        int diff = (int) ((mPositionX - event.getX()) * 100.0f);
+                        int newPos = mediaPlayer.getCurrentPosition() + diff;
+                        if (newPos < 0) {
+                            newPos = 0;
+                        }
+                        if (newPos >= mediaPlayer.getDuration()) {
+                            newPos = mediaPlayer.getDuration();
+                        }
+                        mediaPlayer.seekTo(newPos);
+                        mPositionX = event.getX();
+                }
+                return true;
+            }
+        });
+    }
 
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		mMediaPlayer.release();
-	}
+        mediaPlayer.release();
+    }
 
 	@Override
 	public void onPause() {
 		super.onPause();
-		mRenderer.onPause();
-		mMediaPlayer.pause();
-	}
+        sceneManager.onPause();
+        mediaPlayer.pause();
+    }
 
 	@Override
 	public void onResume() {
 		super.onResume();
-		mRenderer.onResume();
-		mMediaPlayer.start();
-	}
+        sceneManager.onResume();
+        mediaPlayer.start();
+    }
 
 }

@@ -37,7 +37,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
 
-public final class GraphicsManager extends GLSurfaceView implements GLSurfaceView.Renderer {
+public final class SceneManager extends GLSurfaceView implements GLSurfaceView.Renderer {
 
     private ByteBuffer mBufferQuad;
     private Context mContext;
@@ -69,6 +69,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
     private final Shader mShaderStencil = new Shader();
     private final Shader mShaderStencilMask = new Shader();
 
+    // TODO: move skybox into member of BasicLevel
     private final Cube mSkybox = new Cube();
 
     private int viewportWidth, viewportHeight;
@@ -76,7 +77,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
     // TODO: Level manager
     private final Level currentLevel = new BasicLevel();
 
-    public GraphicsManager(Context context, MediaPlayer mediaPlayer) {
+    public SceneManager(Context context, MediaPlayer mediaPlayer) {
         super(context);
 
         mContext = context;
@@ -198,15 +199,14 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
         }
 
 
-        // TODO: animate camera from info in Level
-        // init camera at 8,8,8 looking at origin
-
         float deltaTime = (float) (System.currentTimeMillis() - mPrevTime);
         mPrevTime += deltaTime;
         currentLevel.update(deltaTime);
+
+
         Matrix.setLookAtM(mMatrixView, 0,
-                8, 8, 8, // position
-                0, 0, 0, // target
+                currentLevel.CameraPosition[0], currentLevel.CameraPosition[1], currentLevel.CameraPosition[0], // position
+                currentLevel.CameraTarget[0], currentLevel.CameraTarget[1], currentLevel.CameraTarget[2], // target
                 0f, 1f, 0f); // up
         Matrix.setIdentityM(mMatrixViewLight, 0);
         Matrix.translateM(mMatrixViewLight, 0,
@@ -357,7 +357,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFboFull.getTexture(0));
         GLES30.glUniform1i(mShaderBloom3.getHandle("sTextureSource"), 1);
         GLES30.glUniform4fv(mShaderBloom3.getHandle("uForegroundColor"), 1,
-                currentLevel.mForegroundColor, 0);
+                currentLevel.ForegroundColor, 0);
 
         GLES30.glVertexAttribPointer(mShaderBloom3.getHandle("aPosition"), 2,
                 GLES30.GL_BYTE, false, 0, mBufferQuad);
@@ -460,7 +460,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
         int aPosition = shader.getHandle("aPosition");
         int aNormal = shader.getHandle("aNormal");
 
-        GLES30.glUniform3fv(uLightPos, 1, currentLevel.mLightPosition, 0);
+        GLES30.glUniform3fv(uLightPos, 1, currentLevel.LightPosition, 0);
 
         GLES30.glVertexAttribPointer(aPosition, 3, GLES30.GL_BYTE, false, 0,
                 Cube.getVertices());
@@ -520,7 +520,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
         int aPosition = mShaderStencil.getHandle("aPosition");
         int aNormal = mShaderStencil.getHandle("aNormal");
 
-        GLES30.glUniform3fv(uLightPosition, 1, currentLevel.mLightPosition, 0);
+        GLES30.glUniform3fv(uLightPosition, 1, currentLevel.LightPosition, 0);
 
         GLES30.glVertexAttribPointer(aPosition, 4, GLES30.GL_BYTE, false, 0,
                 Cube.getVerticesShadow());

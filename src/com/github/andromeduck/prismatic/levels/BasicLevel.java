@@ -17,7 +17,6 @@
 package com.github.andromeduck.prismatic.levels;
 
 import com.github.andromeduck.prismatic.graphics.models.Cube;
-import com.github.andromeduck.prismatic.graphics.GraphicsManager;
 
 public class BasicLevel implements Level {
 
@@ -35,6 +34,10 @@ public class BasicLevel implements Level {
 
     @Override
     public void update(float t) {
+        CameraPosition[0] = 8;
+        CameraPosition[1] = 8;
+        CameraPosition[2] = 8;
+
         mCubes[0].setTranslate((float) Math.sin(t), (float) Math.cos(t), (float) Math.cos(t));
     }
 }
