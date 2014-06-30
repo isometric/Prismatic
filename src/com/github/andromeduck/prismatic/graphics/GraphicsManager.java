@@ -45,6 +45,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
     private final FBO mFboFull = new FBO();
     private final FBO mFboQuarter = new FBO();
     private int mInitCounter;
+    private long mPrevTime;
     private final float[] mMatrixExtrude = new float[16];
     private final float[] mMatrixProjection = new float[16];
     private final float[] mMatrixProjectionDepth = new float[16];
@@ -200,8 +201,8 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
         // TODO: animate camera from info in Level
         // init camera at 8,8,8 looking at origin
 
-        // TODO: fetch delta time
-        float deltaTime = 0;
+        float deltaTime = (float) (System.currentTimeMillis() - mPrevTime);
+        mPrevTime += deltaTime;
         currentLevel.update(deltaTime);
         Matrix.setLookAtM(mMatrixView, 0,
                 8, 8, 8, // position
