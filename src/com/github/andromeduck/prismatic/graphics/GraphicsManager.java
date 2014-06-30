@@ -25,14 +25,10 @@ import javax.microedition.khronos.opengles.GL10;
 
 import com.github.andromeduck.prismatic.R;
 import com.github.andromeduck.prismatic.graphics.models.Cube;
-import com.github.andromeduck.prismatic.levels.CubismModelBasic;
-import com.github.andromeduck.prismatic.levels.CubismModelBitmap;
-import com.github.andromeduck.prismatic.levels.CubismModelExplosion;
-import com.github.andromeduck.prismatic.levels.CubismModelExplosionShadowVolume;
-import com.github.andromeduck.prismatic.levels.CubismModelRandom;
+import com.github.andromeduck.prismatic.levels.Level;
+import com.github.andromeduck.prismatic.levels.BasicLevel;
 
 import android.content.Context;
-import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
@@ -58,28 +54,26 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
     private final float[] mMatrixViewLight = new float[16];
     private final float[] mMatrixViewProjection = new float[16];
     private MediaPlayer mMediaPlayer;
-    private final Model[] levels;
 
     private final float[] mPlanes = new float[24];
+    private final boolean[] mShaderCompilerSupport = new boolean[1];
+
+
     private final Shader mShaderBloom1 = new Shader();
     private final Shader mShaderBloom2 = new Shader();
     private final Shader mShaderBloom3 = new Shader();
-    private final boolean[] mShaderCompilerSupport = new boolean[1];
     private final Shader mShaderDefault = new Shader();
     private final Shader mShaderDepth = new Shader();
     private final Shader mShaderDepthMap = new Shader();
     private final Shader mShaderStencil = new Shader();
     private final Shader mShaderStencilMask = new Shader();
+
     private final Cube mSkybox = new Cube();
-    private int mWidth, mHeight;
 
-    // TODO: refactor scene info into new class
-    private final float[] mCameraLookAt = new float[3];
-    private final float[] mCameraPosition = new float[3];
-    private final float[] mLightPosition = {0, 10, 2};
-    private final float[] mForegroundColor = {0, 0, 0, 0.5f};
+    private int viewportWidth, viewportHeight;
 
-    private final int currentLevel = 0;
+    // TODO: Level manager
+    private final Level currentLevel = new BasicLevel();
 
     public GraphicsManager(Context context, MediaPlayer mediaPlayer) {
         super(context);
@@ -97,21 +91,9 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
         mBufferQuad = ByteBuffer.allocateDirect(4 * 2);
         mBufferQuad.put(FULL_QUAD_COORDS).position(0);
 
-        mSkybox.setScale(-10f);
+        // negative scaling makes cube draw on inside instead of outside
+        mSkybox.setScale(-15f);
 
-        levels = new Model[8];
-        levels[0] = new CubismModelBasic();
-        levels[1] = new CubismModelExplosion(10);
-        levels[2] = new CubismModelRandom(6);
-        levels[3] = new CubismModelBitmap(BitmapFactory.decodeStream(mContext
-                .getResources().openRawResource(R.raw.img_cubism)));
-        levels[4] = new CubismModelBitmap(BitmapFactory.decodeStream(mContext
-                .getResources().openRawResource(R.raw.img_harism)));
-        levels[5] = new CubismModelBitmap(BitmapFactory.decodeStream(mContext
-                .getResources().openRawResource(R.raw.img_heart)));
-        levels[6] = new CubismModelBitmap(BitmapFactory.decodeStream(mContext
-                .getResources().openRawResource(R.raw.img_jinny)));
-        levels[7] = new CubismModelExplosionShadowVolume(6);
 
         // init camera at 8,8,8 looking at origin
         Matrix.setLookAtM(mMatrixView, 0,
@@ -120,7 +102,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
                 0f, 1f, 0f); // up
         Matrix.setIdentityM(mMatrixViewLight, 0);
         Matrix.translateM(mMatrixViewLight, 0,
-                0, -5, -5);
+                5, 5, 5);
     }
 
     /**
@@ -199,7 +181,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
                 }
             }
             case 3: {
-                float aspectR = (float) mWidth / mHeight;
+                float aspectR = (float) viewportWidth / viewportHeight;
                 MathUtils.setPerspectiveM(mMatrixProjection, 45f, aspectR, .1f,
                         40f);
                 MathUtils.setPerspectiveM(mMatrixProjectionDepth, 90f, 1f, .1f,
@@ -207,20 +189,34 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
                 MathUtils.setExtrudeM(mMatrixExtrude, 45f, aspectR, .1f);
 
                 mFboCubeMap.init(512, 512, GLES30.GL_TEXTURE_CUBE_MAP, 1, true);
-                mFboQuarter.init(mWidth / 4, mHeight / 4, 2);
-                mFboFull.init(mWidth, mHeight, GLES30.GL_TEXTURE_2D, 1, true);
+                mFboQuarter.init(viewportWidth / 4, viewportHeight / 4, 2);
+                mFboFull.init(viewportWidth, viewportHeight, GLES30.GL_TEXTURE_2D, 1, true);
 
                 mInitCounter = 4;
             }
         }
 
+
+        // TODO: animate camera from info in Level
+        // init camera at 8,8,8 looking at origin
+
+        // TODO: fetch delta time
+        float deltaTime = 0;
+        currentLevel.update(deltaTime);
+        Matrix.setLookAtM(mMatrixView, 0,
+                8, 8, 8, // position
+                0, 0, 0, // target
+                0f, 1f, 0f); // up
+        Matrix.setIdentityM(mMatrixViewLight, 0);
+        Matrix.translateM(mMatrixViewLight, 0,
+                0, -5, -5);
         /**
          * Actual scene rendering.
          */
 
-        int renderMode = levels[currentLevel].getRenderMode();
+        int renderMode = currentLevel.getRenderMode();
         switch (renderMode) {
-            case Model.MODE_SHADOWMAP: {
+            case Level.MODE_SHADOWMAP: {
                 renderDepthMap();
 
                 mFboFull.bindTexture(GLES30.GL_TEXTURE_2D, 0);
@@ -230,7 +226,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
                 renderBloom();
                 break;
             }
-            case Model.MODE_SHADOWVOLUME: {
+            case Level.MODE_SHADOWVOLUME: {
                 mFboFull.bindTexture(GLES30.GL_TEXTURE_2D, 0);
                 GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT
                         | GLES30.GL_STENCIL_BUFFER_BIT);
@@ -259,23 +255,12 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
                 break;
             }
         }
-
-
-        // TODO: animate camera
-        // init camera at 8,8,8 looking at origin
-        Matrix.setLookAtM(mMatrixView, 0,
-                8, 8, 8, // position
-                0, 0, 0, // target
-                0f, 1f, 0f); // up
-        Matrix.setIdentityM(mMatrixViewLight, 0);
-        Matrix.translateM(mMatrixViewLight, 0,
-                0, -5, -5);
     }
 
     @Override
     public void onSurfaceChanged(GL10 unused, int width, int height) {
-        mWidth = width;
-        mHeight = height;
+        viewportWidth = width;
+        viewportHeight = height;
 
         if (mInitCounter > 3) {
             mInitCounter = 3;
@@ -360,7 +345,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
          */
 
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
-        GLES30.glViewport(0, 0, mWidth, mHeight);
+        GLES30.glViewport(0, 0, viewportWidth, viewportHeight);
 
         mShaderBloom3.useProgram();
 
@@ -371,7 +356,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFboFull.getTexture(0));
         GLES30.glUniform1i(mShaderBloom3.getHandle("sTextureSource"), 1);
         GLES30.glUniform4fv(mShaderBloom3.getHandle("uForegroundColor"), 1,
-                mForegroundColor, 0);
+                currentLevel.mForegroundColor, 0);
 
         GLES30.glVertexAttribPointer(mShaderBloom3.getHandle("aPosition"), 2,
                 GLES30.GL_BYTE, false, 0, mBufferQuad);
@@ -443,7 +428,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
                 mMatrixViewProjection, 0);
         Visibility.extractPlanes(mMatrixViewProjection, mPlanes);
 
-        for (Cube cube : levels[currentLevel].getCubes()) {
+        for (Cube cube : currentLevel.getCubes()) {
             if (Visibility.intersects(mPlanes, cube.getBoundingSphere())) {
                 GLES30.glUniformMatrix4fv(uModelM, 1, false, cube.getModelM(), 0);
                 GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
@@ -459,7 +444,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
 
     public void renderScene(int renderMode) {
         Shader shader;
-        if (renderMode == Model.MODE_SHADOWMAP) {
+        if (renderMode == Level.MODE_SHADOWMAP) {
             shader = mShaderDepthMap;
         } else {
             shader = mShaderDefault;
@@ -474,7 +459,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
         int aPosition = shader.getHandle("aPosition");
         int aNormal = shader.getHandle("aNormal");
 
-        GLES30.glUniform3fv(uLightPos, 1, mLightPosition, 0);
+        GLES30.glUniform3fv(uLightPos, 1, currentLevel.mLightPosition, 0);
 
         GLES30.glVertexAttribPointer(aPosition, 3, GLES30.GL_BYTE, false, 0,
                 Cube.getVertices());
@@ -484,7 +469,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
                 Cube.getNormals());
         GLES30.glEnableVertexAttribArray(aNormal);
 
-        if (renderMode == Model.MODE_SHADOWMAP) {
+        if (renderMode == Level.MODE_SHADOWMAP) {
             GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
             GLES30.glBindTexture(GLES30.GL_TEXTURE_CUBE_MAP,
                     mFboCubeMap.getTexture(0));
@@ -501,7 +486,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
                 mMatrixView, 0);
         Visibility.extractPlanes(mMatrixViewProjection, mPlanes);
 
-        for (Cube cube : levels[currentLevel].getCubes()) {
+        for (Cube cube : currentLevel.getCubes()) {
             if (Visibility.intersects(mPlanes, cube.getBoundingSphere())) {
                 GLES30.glUniformMatrix4fv(uModelM, 1, false, cube.getModelM(), 0);
                 GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
@@ -534,7 +519,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
         int aPosition = mShaderStencil.getHandle("aPosition");
         int aNormal = mShaderStencil.getHandle("aNormal");
 
-        GLES30.glUniform3fv(uLightPosition, 1, mLightPosition, 0);
+        GLES30.glUniform3fv(uLightPosition, 1, currentLevel.mLightPosition, 0);
 
         GLES30.glVertexAttribPointer(aPosition, 4, GLES30.GL_BYTE, false, 0,
                 Cube.getVerticesShadow());
@@ -565,7 +550,7 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
         GLES30.glStencilOpSeparate(GLES30.GL_BACK, GLES30.GL_KEEP,
                 GLES30.GL_KEEP, GLES30.GL_DECR_WRAP);
 
-        for (Cube cube : levels[currentLevel].getCubes()) {
+        for (Cube cube : currentLevel.getCubes()) {
             GLES30.glUniformMatrix4fv(uModelM, 1, false, cube.getModelM(), 0);
             GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 24);
         }
@@ -592,15 +577,5 @@ public final class GraphicsManager extends GLSurfaceView implements GLSurfaceVie
     }
 
 
-    public interface Model {
-        public static final int MODE_SHADOWMAP = 1;
-        public static final int MODE_SHADOWVOLUME = 2;
-
-        public Cube[] getCubes();
-
-        public int getRenderMode();
-
-        public void setInterpolation(float t);
-    }
 
 }

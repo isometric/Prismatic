@@ -19,7 +19,7 @@ package com.github.andromeduck.prismatic.levels;
 import com.github.andromeduck.prismatic.graphics.models.Cube;
 import com.github.andromeduck.prismatic.graphics.GraphicsManager;
 
-public class CubismModelBasic implements GraphicsManager.Model {
+public class BasicLevel implements Level {
 
     private final Cube[] mCubes = {new Cube()};
 
@@ -33,8 +33,8 @@ public class CubismModelBasic implements GraphicsManager.Model {
 		return MODE_SHADOWMAP;
 	}
 
-	@Override
-	public void setInterpolation(float t) {
-	}
-
+    @Override
+    public void update(float t) {
+        mCubes[0].setTranslate((float) Math.sin(t), (float) Math.cos(t), (float) Math.cos(t));
+    }
 }
