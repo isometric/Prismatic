@@ -205,6 +205,11 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
             }
         }
 
+        // TODO: clear screen to black after every frame 
+        GLES30.glColorMask(true, true, true, true);
+        GLES30.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT | GLES30.GL_STENCIL_BUFFER_BIT);
+
         float deltaTime = (float) (System.currentTimeMillis() - PrevTime);
         PrevTime += deltaTime;
         currentLevel.update(deltaTime, inputDir);

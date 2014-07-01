@@ -43,10 +43,11 @@ public abstract class Level {
     public void updateCamera() {
         float[] playerPos = player.getPosition();
 
+
+        // TODO: figure out why camera perspective is changing
         cameraTarget[0] = playerPos[0];
         cameraTarget[1] = playerPos[1];
         cameraTarget[2] = playerPos[2];
-
 
         cameraPosition[0] = playerPos[0] + 8f;
         cameraPosition[1] = playerPos[1] + 8f;
