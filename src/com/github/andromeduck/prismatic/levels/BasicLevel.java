@@ -36,25 +36,30 @@ public class BasicLevel implements Level {
         //TODO: generic platform dictionary
         List<Drawable> platform0 = new ArrayList<Drawable>();
 
-        player.setColor(.4f,.4f,.4f);
+        player.setColor(.4f, .4f, .4f);
 
         Drawable cube0 = new Cube();
-        cube0.setColor(.1f,.1f,.1f);
+        cube0.setColor(.1f, .1f, .1f);
         cube0.setPosition(0, 0, 0);
+        cube0.setScale(0.2f);
         platform0.add(cube0);
 
         Drawable cube1 = new Cube();
-        cube1.setPosition(0, 0, 1);
+        cube1.setPosition(4, 0, 0);
+        cube1.setColor(0.9f, 0.2f, 0.2f);
+        cube1.setScale(0.2f);
         platform0.add(cube1);
 
         Drawable cube2 = new Cube();
-        cube2.setColor(.2f,.8f,.2f);
-        cube2.setPosition(0, 2, 0);
+        cube2.setColor(.2f, .9f, .2f);
+        cube2.setPosition(0, 4, 0);
+        cube2.setScale(0.2f);
         platform0.add(cube2);
 
         Drawable cube3 = new Cube();
-        cube3.setColor(.2f,.2f,.8f);
-        cube3.setPosition(0, 0, 2);
+        cube3.setColor(.2f, .2f, .9f);
+        cube3.setPosition(0, 0, 4);
+        cube3.setScale(0.2f);
         platform0.add(cube3);
 
         platforms.add(platform0);
@@ -62,7 +67,7 @@ public class BasicLevel implements Level {
         //TODO: (skybox) add cubes for fake skybox here
     }
 
-	@Override
+    @Override
     public List<Drawable> getDrawables() {
         List<Drawable> drawables = new ArrayList<Drawable>();
 

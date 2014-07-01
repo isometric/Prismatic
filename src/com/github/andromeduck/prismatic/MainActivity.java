@@ -72,12 +72,13 @@ public class MainActivity extends Activity {
                         float deltaY = (event.getY() - downPos[1]);
 
                         sceneManager.inputDir[0] = (float) (deltaX * Math.sqrt(2) / 2 + deltaY * 1 / 2) / 128f;
-                        sceneManager.inputDir[1] = 0;
-                        sceneManager.inputDir[2] = (float) (deltaY * Math.sqrt(2) / 2 + deltaX * 1 / 2) / 128f;
+                        sceneManager.inputDir[1] = (float) (-deltaY * Math.sqrt(2) / 2 + -deltaX * 1 / 2) / 128f;
+                        sceneManager.inputDir[2] = (float) (-deltaX * Math.sqrt(2) / 2 + deltaY * 1 / 2) / 128f;
                         break;
                     case MotionEvent.ACTION_UP:
                         sceneManager.inputDir[0] = 0;
                         sceneManager.inputDir[1] = 0;
+                        sceneManager.inputDir[2] = 0;
                         break;
                 }
                 return true;
