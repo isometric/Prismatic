@@ -50,7 +50,9 @@ public class BasicLevel extends Level {
         float[] playerPosPrev = player.getPosition();
 
 
-        player.setPosition(inputDir[0], inputDir[1], inputDir[2]);
+        player.setPosition(inputDir[0] + playerPosPrev[0],
+                inputDir[1] + playerPosPrev[1],
+                inputDir[2] + playerPosPrev[2]);
         updateCamera();
 
     }
