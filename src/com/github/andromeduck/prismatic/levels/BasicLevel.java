@@ -87,9 +87,11 @@ public class BasicLevel implements Level {
 
     @Override
     public void update(float t, float[] inputDir) {
+        float[] playerPosPrev = player.getPosition();
 
-        updateCamera();
+
         player.setPosition(inputDir[0], inputDir[1], inputDir[2]);
+        updateCamera();
 
     }
 
