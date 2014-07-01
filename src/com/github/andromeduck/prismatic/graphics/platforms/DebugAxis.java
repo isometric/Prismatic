@@ -3,9 +3,6 @@ package com.github.andromeduck.prismatic.graphics.platforms;
 import com.github.andromeduck.prismatic.graphics.blocks.Cube;
 import com.github.andromeduck.prismatic.graphics.blocks.Drawable;
 
-/**
- * Created by t-jadeng on 7/1/2014.
- */
 public class DebugAxis extends Platform {
 
     public DebugAxis() {

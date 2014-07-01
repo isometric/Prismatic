@@ -205,11 +205,8 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
             }
         }
 
-        // TODO: clear screen to black after every frame 
-        GLES30.glColorMask(true, true, true, true);
-        GLES30.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT | GLES30.GL_STENCIL_BUFFER_BIT);
 
+        // TODO figure out how to change draw distance, stencil/depth buffer values.
         float deltaTime = (float) (System.currentTimeMillis() - PrevTime);
         PrevTime += deltaTime;
         currentLevel.update(deltaTime, inputDir);
@@ -498,6 +495,9 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
         Matrix.multiplyMM(mMatrixViewProjection, 0, mMatrixProjection, 0,
                 mMatrixView, 0);
         Visibility.extractPlanes(mMatrixViewProjection, mPlanes);
+
+        // TODO: figure out why this works
+        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
 
         for (Drawable cube : currentLevel.getDrawables()) {
             if (Visibility.intersects(mPlanes, cube.getBoundingSphere())) {
