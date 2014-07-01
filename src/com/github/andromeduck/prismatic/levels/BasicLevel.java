@@ -16,15 +16,52 @@
 
 package com.github.andromeduck.prismatic.levels;
 
+import android.graphics.Camera;
+
 import com.github.andromeduck.prismatic.graphics.models.Cube;
+import com.github.andromeduck.prismatic.graphics.models.Drawable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class BasicLevel implements Level {
 
-    private final Cube[] mCubes = {new Cube(), new Cube(), new Cube()};
+    // TODO: create player class
+    public final Drawable player = new Cube();
+    public final List<List<Drawable>> platforms = new ArrayList<List<Drawable>>();
+
+    public BasicLevel() {
+
+
+        player.setScale(0.5f);
+
+        //TODO: generic platform dictionary
+        List<Drawable> platform0 = new ArrayList<Drawable>();
+
+        Drawable cube0 = new Cube();
+        cube0.setScale(0.5f);
+        platform0.add(cube0);
+
+        Drawable cube1 = new Cube();
+        cube1.setPosition(0, 0, 1);
+        cube1.setScale(0.5f);
+        platform0.add(cube1);
+        platforms.add(platform0);
+    }
+
+
 
 	@Override
-    public Cube[] getCubes() {
-        return mCubes;
+    public List<Drawable> getDrawables() {
+        List<Drawable> drawables = new ArrayList<Drawable>();
+
+        drawables.add(player);
+
+        for (List<Drawable> platform : platforms) {
+            drawables.addAll(platform);
+        }
+
+        return drawables;
     }
 
 	@Override
@@ -35,20 +72,25 @@ public class BasicLevel implements Level {
     @Override
     public void update(float t, float[] inputDir) {
 
-        CameraTarget[0] = 0;
-        CameraTarget[1] = 0;
-        CameraTarget[2] = 0;
+        updateCamera();
+        player.setPosition(inputDir[0], 0, inputDir[1]);
+
+    }
+
+    private void updateCamera() {
+        float[] playerPos = player.getPosition();
+
+        CameraTarget[0] = playerPos[0];
+        CameraTarget[1] = playerPos[1];
+        CameraTarget[2] = playerPos[2];
+
+        CameraPosition[0] = playerPos[0] + 5;
+        CameraPosition[1] = playerPos[1] + 5;
+        CameraPosition[2] = playerPos[2] + 5;
 
         CameraUp[0] = 0;
         CameraUp[1] = 1;
         CameraUp[2] = 0;
-
-        CameraPosition[0] = 5;
-        CameraPosition[1] = 5;
-        CameraPosition[2] = 5;
-
-        mCubes[0].setTranslate(inputDir[0], inputDir[1], 0);
-        mCubes[1].setTranslate(2, 0, 0);
-        mCubes[1].setScale(0.5f);
     }
 }
+

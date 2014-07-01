@@ -1,6 +1,9 @@
 package com.github.andromeduck.prismatic.levels;
 
-import com.github.andromeduck.prismatic.graphics.models.Cube;
+import java.util.List;
+
+import com.github.andromeduck.prismatic.graphics.models.Drawable;
+
 
 public interface Level {
     public static final int MODE_SHADOWMAP = 1;
@@ -13,7 +16,7 @@ public interface Level {
     public float[] LightPosition = new float[3];
     public float[] ForegroundColor = new float[4];
 
-    public Cube[] getCubes();
+    public List<Drawable> getDrawables();
 
     public int getRenderMode();
 

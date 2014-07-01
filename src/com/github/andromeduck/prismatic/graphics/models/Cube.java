@@ -22,7 +22,7 @@ import android.opengl.Matrix;
 
 import com.github.andromeduck.prismatic.graphics.MathUtils;
 
-public class Cube {
+public class Cube implements Drawable {
 
 	private static ByteBuffer mBufferNormals;
 	private static ByteBuffer mBufferNormalsInv;
@@ -104,8 +104,8 @@ public class Cube {
 		mBufferNormalsShadow.position(0);
 	}
 
-	public static ByteBuffer getNormals() {
-		return mBufferNormals;
+    public static ByteBuffer getNormals() {
+        return mBufferNormals;
 	}
 
 	public static ByteBuffer getNormalsInv() {
@@ -131,6 +131,8 @@ public class Cube {
 	private final float[] mMatrixScale = new float[16];
 	private final float[] mMatrixTranslate = new float[16];
 	private boolean mRecalculate;
+    private final float[] position = new float[3];
+    private float scale = 0;
 
     public Cube() {
         Matrix.setIdentityM(mMatrixRotate, 0);
@@ -140,16 +142,19 @@ public class Cube {
 		mBoundingSphere[3] = SQRT_2;
 	}
 
-	public float[] getBoundingSphere() {
-		return mBoundingSphere;
+    @Override
+    public float[] getBoundingSphere() {
+        return mBoundingSphere;
 	}
 
-	public float[] getColor() {
-		return mColor;
+    @Override
+    public float[] getColor() {
+        return mColor;
 	}
 
-	public float[] getModelM() {
-		if (mRecalculate) {
+    @Override
+    public float[] getModelM() {
+        if (mRecalculate) {
 			Matrix.multiplyMM(mMatrixModel, 0, mMatrixRotate, 0, mMatrixScale,
 					0);
 			Matrix.multiplyMM(mMatrixModel, 0, mMatrixTranslate, 0,
@@ -159,31 +164,50 @@ public class Cube {
 		return mMatrixModel;
 	}
 
-	public void setColor(float r, float g, float b) {
-		mColor[0] = r;
+    @Override
+    public void setColor(float r, float g, float b) {
+        mColor[0] = r;
 		mColor[1] = g;
 		mColor[2] = b;
 	}
 
-	public void setRotate(float rx, float ry, float rz) {
+    @Override
+    public void setRotate(float rx, float ry, float rz) {
         MathUtils.setRotateM(mMatrixRotate, rx, ry, rz);
         mRecalculate = true;
     }
 
-	public void setScale(float scale) {
+    @Override
+    public void setScale(float scale) {
+        this.scale = scale;
+
 		Matrix.setIdentityM(mMatrixScale, 0);
 		Matrix.scaleM(mMatrixScale, 0, scale, scale, scale);
 		mBoundingSphere[3] = SQRT_2 * scale;
 		mRecalculate = true;
 	}
 
-	public void setTranslate(float tx, float ty, float tz) {
-		Matrix.setIdentityM(mMatrixTranslate, 0);
-		Matrix.translateM(mMatrixTranslate, 0, tx, ty, tz);
+    @Override
+    public float getScale() {
+        return scale;
+    }
+
+    @Override
+    public void setPosition(float tx, float ty, float tz) {
+        position[0] = tx;
+        position[1] = ty;
+        position[2] = tz;
+
+        Matrix.setIdentityM(mMatrixTranslate, 0);
+        Matrix.translateM(mMatrixTranslate, 0, tx, ty, tz);
 		mBoundingSphere[0] = tx;
 		mBoundingSphere[1] = ty;
 		mBoundingSphere[2] = tz;
 		mRecalculate = true;
 	}
 
+    @Override
+    public float[] getPosition() {
+        return position;
+    }
 }

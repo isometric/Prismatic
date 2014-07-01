@@ -25,6 +25,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import com.github.andromeduck.prismatic.R;
 import com.github.andromeduck.prismatic.graphics.models.Cube;
+import com.github.andromeduck.prismatic.graphics.models.Drawable;
 import com.github.andromeduck.prismatic.levels.Level;
 import com.github.andromeduck.prismatic.levels.BasicLevel;
 
@@ -77,7 +78,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
     private final Shader mShaderStencilMask = new Shader();
 
     // TODO: move skybox into member of BasicLevel
-    private final Cube mSkybox = new Cube();
+    private final Drawable mSkybox = new Cube();
 
     private int viewportWidth, viewportHeight;
 
@@ -434,7 +435,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
                 mMatrixViewProjection, 0);
         Visibility.extractPlanes(mMatrixViewProjection, mPlanes);
 
-        for (Cube cube : currentLevel.getCubes()) {
+        for (Drawable cube : currentLevel.getDrawables()) {
             if (Visibility.intersects(mPlanes, cube.getBoundingSphere())) {
                 GLES30.glUniformMatrix4fv(uModelM, 1, false, cube.getModelM(), 0);
                 GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
@@ -492,7 +493,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
                 mMatrixView, 0);
         Visibility.extractPlanes(mMatrixViewProjection, mPlanes);
 
-        for (Cube cube : currentLevel.getCubes()) {
+        for (Drawable cube : currentLevel.getDrawables()) {
             if (Visibility.intersects(mPlanes, cube.getBoundingSphere())) {
                 GLES30.glUniformMatrix4fv(uModelM, 1, false, cube.getModelM(), 0);
                 GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
@@ -556,7 +557,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
         GLES30.glStencilOpSeparate(GLES30.GL_BACK, GLES30.GL_KEEP,
                 GLES30.GL_KEEP, GLES30.GL_DECR_WRAP);
 
-        for (Cube cube : currentLevel.getCubes()) {
+        for (Drawable cube : currentLevel.getDrawables()) {
             GLES30.glUniformMatrix4fv(uModelM, 1, false, cube.getModelM(), 0);
             GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 24);
         }
