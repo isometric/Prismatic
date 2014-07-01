@@ -47,8 +47,7 @@ public class BasicLevel implements Level {
     }
 
 
-
-	@Override
+    @Override
     public List<Drawable> getDrawables() {
         List<Drawable> drawables = new ArrayList<Drawable>();
 
@@ -61,16 +60,16 @@ public class BasicLevel implements Level {
         return drawables;
     }
 
-	@Override
-	public int getRenderMode() {
-		return MODE_SHADOWMAP;
-	}
+    @Override
+    public int getRenderMode() {
+        return MODE_SHADOWMAP;
+    }
 
     @Override
     public void update(float t, float[] inputDir) {
 
         updateCamera();
-        player.setPosition(inputDir[0], 0, inputDir[1]);
+        player.setPosition(inputDir[0], inputDir[1], inputDir[2]);
 
     }
 

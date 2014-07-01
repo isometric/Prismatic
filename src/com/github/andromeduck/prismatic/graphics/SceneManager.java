@@ -46,8 +46,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
 
 
     private long PrevTime;
-    public final float[] inputDir = new float[2];
-
+    public final float[] inputDir = new float[3];
 
 
     private final FBO mFboCubeMap = new FBO();
@@ -582,7 +581,6 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
             }
         });
     }
-
 
 
 }

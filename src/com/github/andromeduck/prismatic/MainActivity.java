@@ -31,17 +31,17 @@ public class MainActivity extends Activity {
     private MediaPlayer mediaPlayer;
     private SceneManager sceneManager;
 
-	@Override
-	public void onConfigurationChanged(Configuration newConfig) {
-		super.onConfigurationChanged(newConfig);
-	}
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+    }
 
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-		// Create media player object.
+        // Create media player object.
         mediaPlayer = MediaPlayer.create(this, R.raw.music);
         mediaPlayer.setLooping(false);
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -52,14 +52,14 @@ public class MainActivity extends Activity {
         });
 
 
-		// Create GLSurfaceView.
+        // Create GLSurfaceView.
         sceneManager = new SceneManager(this, mediaPlayer);
         setContentView(sceneManager);
 
         sceneManager.setOnTouchListener(new View.OnTouchListener() {
+
             float[] downPos = new float[2];
 
-            // TODO: implement virtual joystick like behaviour
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
@@ -68,10 +68,12 @@ public class MainActivity extends Activity {
                         downPos[1] = event.getY();
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        float deltaX = (event.getX() - downPos[0]) / 512.f;
-                        float deltaY = -(event.getY() - downPos[1]) / 512.f;
-                        sceneManager.inputDir[0] = deltaX;
-                        sceneManager.inputDir[1] = deltaY;
+                        float deltaX = (event.getX() - downPos[0]);
+                        float deltaY = (event.getY() - downPos[1]);
+
+                        sceneManager.inputDir[0] = (float) (deltaX * Math.sqrt(2) / 2 + deltaY * 1 / 2) / 128f;
+                        sceneManager.inputDir[1] = 0;
+                        sceneManager.inputDir[2] = (float) (deltaY * Math.sqrt(2) / 2 + deltaX * 1 / 2) / 128f;
                         break;
                     case MotionEvent.ACTION_UP:
                         sceneManager.inputDir[0] = 0;
@@ -83,22 +85,22 @@ public class MainActivity extends Activity {
         });
     }
 
-	@Override
-	public void onDestroy() {
-		super.onDestroy();
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
         mediaPlayer.release();
     }
 
-	@Override
-	public void onPause() {
-		super.onPause();
+    @Override
+    public void onPause() {
+        super.onPause();
         sceneManager.onPause();
         mediaPlayer.pause();
     }
 
-	@Override
-	public void onResume() {
-		super.onResume();
+    @Override
+    public void onResume() {
+        super.onResume();
         sceneManager.onResume();
         mediaPlayer.start();
     }
