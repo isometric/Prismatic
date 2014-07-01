@@ -24,8 +24,8 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import com.github.andromeduck.prismatic.R;
-import com.github.andromeduck.prismatic.graphics.models.Cube;
-import com.github.andromeduck.prismatic.graphics.models.Drawable;
+import com.github.andromeduck.prismatic.graphics.blocks.Cube;
+import com.github.andromeduck.prismatic.graphics.blocks.Drawable;
 import com.github.andromeduck.prismatic.levels.Level;
 import com.github.andromeduck.prismatic.levels.BasicLevel;
 
@@ -211,9 +211,9 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
 
 
         Matrix.setLookAtM(mMatrixView, 0,
-                currentLevel.CameraPosition[0], currentLevel.CameraPosition[1], currentLevel.CameraPosition[0], // position
-                currentLevel.CameraTarget[0], currentLevel.CameraTarget[1], currentLevel.CameraTarget[2], // target
-                currentLevel.CameraUp[0], currentLevel.CameraUp[1], currentLevel.CameraUp[2]); // up
+                currentLevel.cameraPosition[0], currentLevel.cameraPosition[1], currentLevel.cameraPosition[0], // position
+                currentLevel.cameraTarget[0], currentLevel.cameraTarget[1], currentLevel.cameraTarget[2], // target
+                currentLevel.cameraUp[0], currentLevel.cameraUp[1], currentLevel.cameraUp[2]); // up
         Matrix.setIdentityM(mMatrixViewLight, 0);
         Matrix.translateM(mMatrixViewLight, 0,
                 0, -0, -0);
@@ -363,7 +363,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFboFull.getTexture(0));
         GLES30.glUniform1i(mShaderBloom3.getHandle("sTextureSource"), 1);
         GLES30.glUniform4fv(mShaderBloom3.getHandle("uForegroundColor"), 1,
-                currentLevel.ForegroundColor, 0);
+                currentLevel.foregroundColor, 0);
 
         GLES30.glVertexAttribPointer(mShaderBloom3.getHandle("aPosition"), 2,
                 GLES30.GL_BYTE, false, 0, mBufferQuad);
@@ -467,7 +467,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
         int aPosition = shader.getHandle("aPosition");
         int aNormal = shader.getHandle("aNormal");
 
-        GLES30.glUniform3fv(uLightPos, 1, currentLevel.LightPosition, 0);
+        GLES30.glUniform3fv(uLightPos, 1, currentLevel.lightPosition, 0);
 
         GLES30.glVertexAttribPointer(aPosition, 3, GLES30.GL_BYTE, false, 0,
                 Cube.getVertices());
@@ -529,7 +529,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
         int aPosition = mShaderStencil.getHandle("aPosition");
         int aNormal = mShaderStencil.getHandle("aNormal");
 
-        GLES30.glUniform3fv(uLightPosition, 1, currentLevel.LightPosition, 0);
+        GLES30.glUniform3fv(uLightPosition, 1, currentLevel.lightPosition, 0);
 
         GLES30.glVertexAttribPointer(aPosition, 4, GLES30.GL_BYTE, false, 0,
                 Cube.getVerticesShadow());

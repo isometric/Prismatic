@@ -1,4 +1,4 @@
-package com.github.andromeduck.prismatic.graphics.models;
+package com.github.andromeduck.prismatic.graphics.blocks;
 
 /**
  * Created by t-jadeng on 6/30/2014.
