@@ -77,7 +77,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
     private final Shader mShaderStencil = new Shader();
     private final Shader mShaderStencilMask = new Shader();
 
-    // TODO: move skybox into member of BasicLevel
+    // TODO: (skybox) move skybox into member of BasicLevel (check if it's okay to comment this out)
     private final Drawable mSkybox = new Cube();
 
     private int viewportWidth, viewportHeight;
@@ -101,6 +101,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
         mBufferQuad = ByteBuffer.allocateDirect(4 * 2);
         mBufferQuad.put(FULL_QUAD_COORDS).position(0);
 
+        //TODO: (skybox) is removing this OK?
         // negative scaling makes cube draw on inside instead of outside
         mSkybox.setScale(-10f);
 
@@ -442,6 +443,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
             }
         }
 
+        ///TODO: (skybox) is removing this OK?
         GLES30.glUniformMatrix4fv(uModelM, 1, false, mSkybox.getModelM(), 0);
 
         GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
@@ -496,13 +498,16 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
         for (Drawable cube : currentLevel.getDrawables()) {
             if (Visibility.intersects(mPlanes, cube.getBoundingSphere())) {
                 GLES30.glUniformMatrix4fv(uModelM, 1, false, cube.getModelM(), 0);
+                GLES30.glUniform3f(uColor, cube.getColor()[0], cube.getColor()[1], cube.getColor()[2]);
                 GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
             }
         }
 
+        //TODO: (skybox) test if removal is OK:
         GLES30.glUniformMatrix4fv(uModelM, 1, false, mSkybox.getModelM(), 0);
         GLES30.glUniform3f(uColor, .5f, .5f, .5f);
 
+        //all of the stuff below in this function is a hack to allow this inverted cube to draw
         GLES30.glVertexAttribPointer(aNormal, 3, GLES30.GL_BYTE, false, 0,
                 Cube.getNormalsInv());
         GLES30.glEnableVertexAttribArray(aNormal);
