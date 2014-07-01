@@ -70,13 +70,13 @@ public class MainActivity extends Activity {
                     case MotionEvent.ACTION_MOVE:
                         float deltaX = (event.getX() - downPos[0]) / 128.f;
                         float deltaY = -(event.getY() - downPos[1]) / 128.f;
-
                         sceneManager.inputDir[0] = deltaX;
                         sceneManager.inputDir[1] = deltaY;
                         break;
                     case MotionEvent.ACTION_UP:
                         sceneManager.inputDir[0] = 0;
                         sceneManager.inputDir[1] = 0;
+                        break;
                 }
                 return true;
             }
