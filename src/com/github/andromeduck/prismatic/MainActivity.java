@@ -68,8 +68,8 @@ public class MainActivity extends Activity {
                         downPos[1] = event.getY();
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        float deltaX = (event.getX() - downPos[0]) / 128.f;
-                        float deltaY = -(event.getY() - downPos[1]) / 128.f;
+                        float deltaX = (event.getX() - downPos[0]) / 512.f;
+                        float deltaY = -(event.getY() - downPos[1]) / 512.f;
                         sceneManager.inputDir[0] = deltaX;
                         sceneManager.inputDir[1] = deltaY;
                         break;

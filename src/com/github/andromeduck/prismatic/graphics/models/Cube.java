@@ -140,7 +140,10 @@ public class Cube implements Drawable {
 		Matrix.setIdentityM(mMatrixTranslate, 0);
 		Matrix.setIdentityM(mMatrixModel, 0);
 		mBoundingSphere[3] = SQRT_2;
-	}
+
+        // scale cube to size 1
+        setScale(1);
+    }
 
     @Override
     public float[] getBoundingSphere() {
@@ -180,6 +183,9 @@ public class Cube implements Drawable {
     @Override
     public void setScale(float scale) {
         this.scale = scale;
+
+        // scale base cube to size 1 instead of 2
+        scale *= 0.5;
 
 		Matrix.setIdentityM(mMatrixScale, 0);
 		Matrix.scaleM(mMatrixScale, 0, scale, scale, scale);

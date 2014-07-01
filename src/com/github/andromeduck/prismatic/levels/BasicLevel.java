@@ -33,19 +33,16 @@ public class BasicLevel implements Level {
     public BasicLevel() {
 
 
-        player.setScale(0.5f);
-
         //TODO: generic platform dictionary
         List<Drawable> platform0 = new ArrayList<Drawable>();
 
         Drawable cube0 = new Cube();
-        cube0.setScale(0.5f);
         platform0.add(cube0);
 
         Drawable cube1 = new Cube();
         cube1.setPosition(0, 0, 1);
-        cube1.setScale(0.5f);
         platform0.add(cube1);
+
         platforms.add(platform0);
     }
 
@@ -84,9 +81,10 @@ public class BasicLevel implements Level {
         CameraTarget[1] = playerPos[1];
         CameraTarget[2] = playerPos[2];
 
-        CameraPosition[0] = playerPos[0] + 5;
-        CameraPosition[1] = playerPos[1] + 5;
-        CameraPosition[2] = playerPos[2] + 5;
+
+        CameraPosition[0] = playerPos[0] + 8f;
+        CameraPosition[1] = playerPos[1] + 8f;
+        CameraPosition[2] = playerPos[2] + 8f;
 
         CameraUp[0] = 0;
         CameraUp[1] = 1;
