@@ -64,7 +64,45 @@ public class BasicLevel implements Level {
 
         platforms.add(platform0);
 
-        //TODO: (skybox) add cubes for fake skybox here
+        //fake skybox made out of six cubes
+        float skyboxTone = .5f;
+        float skyboxScale = 30f;
+
+        Drawable cube4 = new Cube();
+        cube4.setColor(skyboxTone, skyboxTone, skyboxTone);
+        cube4.setPosition(-skyboxScale, 0, 0);
+        cube4.setScale(skyboxScale);
+        platform0.add(cube4);
+
+        Drawable cube5 = new Cube();
+        cube5.setColor(skyboxTone, skyboxTone, skyboxTone);
+        cube5.setPosition(skyboxScale, 0, 0);
+        cube5.setScale(skyboxScale);
+        platform0.add(cube5);
+
+        Drawable cube6 = new Cube();
+        cube6.setColor(skyboxTone, skyboxTone, skyboxTone);
+        cube6.setPosition(0, -skyboxScale, 0);
+        cube6.setScale(skyboxScale);
+        platform0.add(cube6);
+
+        Drawable cube7 = new Cube();
+        cube7.setColor(skyboxTone, skyboxTone, skyboxTone);
+        cube7.setPosition(0, skyboxScale, 0);
+        cube7.setScale(skyboxScale);
+        platform0.add(cube7);
+
+        Drawable cube8 = new Cube();
+        cube8.setColor(skyboxTone, skyboxTone, skyboxTone);
+        cube8.setPosition(0, 0, -skyboxScale);
+        cube8.setScale(skyboxScale);
+        platform0.add(cube8);
+
+        Drawable cube9 = new Cube();
+        cube9.setColor(skyboxTone, skyboxTone, skyboxTone);
+        cube9.setPosition(0, 0, skyboxScale);
+        cube9.setScale(skyboxScale);
+        platform0.add(cube9);
     }
 
     @Override
