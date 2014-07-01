@@ -101,7 +101,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
         mBufferQuad.put(FULL_QUAD_COORDS).position(0);
 
         // negative scaling makes cube draw on inside instead of outside
-        mSkybox.setScale(-15f);
+        mSkybox.setScale(-10f);
 
 
         // init camera at 8,8,8 looking at origin
@@ -130,7 +130,6 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
 
     @Override
     public void onDrawFrame(GL10 unused) {
-
         /**
          * Initialize OpenGL context.
          */
@@ -205,7 +204,6 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
             }
         }
 
-
         float deltaTime = (float) (System.currentTimeMillis() - PrevTime);
         PrevTime += deltaTime;
         currentLevel.update(deltaTime, inputDir);
@@ -214,10 +212,10 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
         Matrix.setLookAtM(mMatrixView, 0,
                 currentLevel.CameraPosition[0], currentLevel.CameraPosition[1], currentLevel.CameraPosition[0], // position
                 currentLevel.CameraTarget[0], currentLevel.CameraTarget[1], currentLevel.CameraTarget[2], // target
-                0f, 1f, 0f); // up
+                currentLevel.CameraUp[0], currentLevel.CameraUp[1], currentLevel.CameraUp[2]); // up
         Matrix.setIdentityM(mMatrixViewLight, 0);
         Matrix.translateM(mMatrixViewLight, 0,
-                0, -5, -5);
+                0, -0, -0);
         /**
          * Actual scene rendering.
          */

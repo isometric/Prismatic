@@ -8,6 +8,8 @@ public interface Level {
 
     public float[] CameraTarget = new float[3];
     public float[] CameraPosition = new float[3];
+    public float[] CameraUp = new float[3];
+
     public float[] LightPosition = new float[3];
     public float[] ForegroundColor = new float[4];
 

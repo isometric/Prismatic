@@ -20,7 +20,7 @@ import com.github.andromeduck.prismatic.graphics.models.Cube;
 
 public class BasicLevel implements Level {
 
-    private final Cube[] mCubes = {new Cube()};
+    private final Cube[] mCubes = {new Cube(), new Cube(), new Cube()};
 
 	@Override
     public Cube[] getCubes() {
@@ -34,10 +34,21 @@ public class BasicLevel implements Level {
 
     @Override
     public void update(float t, float[] inputDir) {
-        CameraPosition[0] = 2;
-        CameraPosition[1] = 2;
-        CameraPosition[2] = -10;
 
-        mCubes[0].setTranslate(inputDir[0], inputDir[0], inputDir[0]);
+        CameraTarget[0] = 0;
+        CameraTarget[1] = 0;
+        CameraTarget[2] = 0;
+
+        CameraUp[0] = 0;
+        CameraUp[1] = 1;
+        CameraUp[2] = 0;
+
+        CameraPosition[0] = 5;
+        CameraPosition[1] = 5;
+        CameraPosition[2] = 5;
+
+        mCubes[0].setTranslate(inputDir[0], inputDir[1], 0);
+        mCubes[1].setTranslate(2, 0, 0);
+        mCubes[1].setScale(0.5f);
     }
 }
