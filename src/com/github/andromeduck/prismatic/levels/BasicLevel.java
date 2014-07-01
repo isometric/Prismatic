@@ -36,18 +36,33 @@ public class BasicLevel implements Level {
         //TODO: generic platform dictionary
         List<Drawable> platform0 = new ArrayList<Drawable>();
 
+        player.setColor(.4f,.4f,.4f);
+
         Drawable cube0 = new Cube();
+        cube0.setColor(.1f,.1f,.1f);
+        cube0.setPosition(0, 0, 0);
         platform0.add(cube0);
 
         Drawable cube1 = new Cube();
         cube1.setPosition(0, 0, 1);
         platform0.add(cube1);
 
+        Drawable cube2 = new Cube();
+        cube2.setColor(.2f,.8f,.2f);
+        cube2.setPosition(0, 2, 0);
+        platform0.add(cube2);
+
+        Drawable cube3 = new Cube();
+        cube3.setColor(.2f,.2f,.8f);
+        cube3.setPosition(0, 0, 2);
+        platform0.add(cube3);
+
         platforms.add(platform0);
+
+        //TODO: (skybox) add cubes for fake skybox here
     }
 
-
-    @Override
+	@Override
     public List<Drawable> getDrawables() {
         List<Drawable> drawables = new ArrayList<Drawable>();
 
