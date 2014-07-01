@@ -41,11 +41,19 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
 
     private ByteBuffer mBufferQuad;
     private Context mContext;
+    private int mInitCounter;
+
+
+    private long PrevTime;
+    public final float[] inputDir = new float[2];
+
+
+
     private final FBO mFboCubeMap = new FBO();
     private final FBO mFboFull = new FBO();
     private final FBO mFboQuarter = new FBO();
-    private int mInitCounter;
-    private long mPrevTime;
+
+
     private final float[] mMatrixExtrude = new float[16];
     private final float[] mMatrixProjection = new float[16];
     private final float[] mMatrixProjectionDepth = new float[16];
@@ -58,7 +66,6 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
 
     private final float[] mPlanes = new float[24];
     private final boolean[] mShaderCompilerSupport = new boolean[1];
-
 
     private final Shader mShaderBloom1 = new Shader();
     private final Shader mShaderBloom2 = new Shader();
@@ -199,9 +206,9 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
         }
 
 
-        float deltaTime = (float) (System.currentTimeMillis() - mPrevTime);
-        mPrevTime += deltaTime;
-        currentLevel.update(deltaTime);
+        float deltaTime = (float) (System.currentTimeMillis() - PrevTime);
+        PrevTime += deltaTime;
+        currentLevel.update(deltaTime, inputDir);
 
 
         Matrix.setLookAtM(mMatrixView, 0,

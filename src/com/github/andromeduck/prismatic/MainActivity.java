@@ -57,26 +57,27 @@ public class MainActivity extends Activity {
         setContentView(sceneManager);
 
         sceneManager.setOnTouchListener(new View.OnTouchListener() {
-            float mPositionX;
+            float PositionX;
+            float PositionY;
 
             // TODO: implement virtual joystick like behaviour
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        mPositionX = event.getX();
+                        PositionX = event.getX();
+                        PositionY = event.getY();
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        int diff = (int) ((mPositionX - event.getX()) * 100.0f);
-                        int newPos = mediaPlayer.getCurrentPosition() + diff;
-                        if (newPos < 0) {
-                            newPos = 0;
-                        }
-                        if (newPos >= mediaPlayer.getDuration()) {
-                            newPos = mediaPlayer.getDuration();
-                        }
-                        mediaPlayer.seekTo(newPos);
-                        mPositionX = event.getX();
+                        float deltaX = ((PositionX - event.getX()) / 128.f);
+                        float deltaY = ((PositionY - event.getY()) / 128.f);
+
+                        sceneManager.inputDir[0] = deltaX;
+                        sceneManager.inputDir[1] = deltaY;
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        sceneManager.inputDir[0] = 0;
+                        sceneManager.inputDir[1] = 0;
                 }
                 return true;
             }

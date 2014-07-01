@@ -33,11 +33,11 @@ public class BasicLevel implements Level {
 	}
 
     @Override
-    public void update(float t) {
-        CameraPosition[0] = 8;
-        CameraPosition[1] = 8;
-        CameraPosition[2] = 8;
+    public void update(float t, float[] inputDir) {
+        CameraPosition[0] = 2;
+        CameraPosition[1] = 2;
+        CameraPosition[2] = -10;
 
-        mCubes[0].setTranslate((float) Math.sin(t), (float) Math.cos(t), (float) Math.cos(t));
+        mCubes[0].setTranslate(inputDir[0], inputDir[0], inputDir[0]);
     }
 }

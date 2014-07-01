@@ -15,5 +15,5 @@ public interface Level {
 
     public int getRenderMode();
 
-    public void update(float t);
+    public void update(float t, float[] inputDir);
 }
