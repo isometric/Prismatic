@@ -76,8 +76,8 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
     private final Shader mShaderStencil = new Shader();
     private final Shader mShaderStencilMask = new Shader();
 
-    // TODO: (skybox) move skybox into member of BasicLevel (check if it's okay to comment this out)
-    private final Drawable mSkybox = new Cube();
+    // code for drawing inverted skybox
+    //private final Drawable mSkybox = new Cube();
 
     private int viewportWidth, viewportHeight;
 
@@ -100,9 +100,9 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
         mBufferQuad = ByteBuffer.allocateDirect(4 * 2);
         mBufferQuad.put(FULL_QUAD_COORDS).position(0);
 
-        //TODO: (skybox) is removing this OK?
+        // code for drawing inverted skybox
         // negative scaling makes cube draw on inside instead of outside
-        mSkybox.setScale(-10f);
+        //mSkybox.setScale(-10f);
 
 
         // init camera at 8,8,8 looking at origin
@@ -442,12 +442,12 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
             }
         }
 
-        ///TODO: (skybox) is removing this OK?
-        GLES30.glUniformMatrix4fv(uModelM, 1, false, mSkybox.getModelM(), 0);
+        //code for drawing inverted skybox
+        /*GLES30.glUniformMatrix4fv(uModelM, 1, false, mSkybox.getModelM(), 0);
 
         GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
 
-        GLES30.glDisable(GLES30.GL_CULL_FACE);
+        GLES30.glDisable(GLES30.GL_CULL_FACE);*/
     }
 
     public void renderScene(int renderMode) {
@@ -502,18 +502,17 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
             }
         }
 
-        //TODO: (skybox) test if removal is OK:
-        GLES30.glUniformMatrix4fv(uModelM, 1, false, mSkybox.getModelM(), 0);
+        //code hacks for drawing inverted skybox
+        /*GLES30.glUniformMatrix4fv(uModelM, 1, false, mSkybox.getModelM(), 0);
         GLES30.glUniform3f(uColor, .5f, .5f, .5f);
 
-        //all of the stuff below in this function is a hack to allow this inverted cube to draw
         GLES30.glVertexAttribPointer(aNormal, 3, GLES30.GL_BYTE, false, 0,
                 Cube.getNormalsInv());
         GLES30.glEnableVertexAttribArray(aNormal);
 
         GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
 
-        GLES30.glDisable(GLES30.GL_CULL_FACE);
+        GLES30.glDisable(GLES30.GL_CULL_FACE);*/
     }
 
     public void renderShadowStencil() {
