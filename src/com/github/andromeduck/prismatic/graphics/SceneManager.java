@@ -111,8 +111,6 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
                 0, 0, 0, // target
                 0f, 1f, 0f); // up
         Matrix.setIdentityM(mMatrixViewLight, 0);
-        Matrix.translateM(mMatrixViewLight, 0,
-                5, 5, 5);
     }
 
     /**
@@ -213,12 +211,10 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
 
 
         Matrix.setLookAtM(mMatrixView, 0,
-                currentLevel.cameraPosition[0], currentLevel.cameraPosition[1], currentLevel.cameraPosition[0], // position
+                currentLevel.cameraPosition[0], currentLevel.cameraPosition[1], currentLevel.cameraPosition[2], // position
                 currentLevel.cameraTarget[0], currentLevel.cameraTarget[1], currentLevel.cameraTarget[2], // target
                 currentLevel.cameraUp[0], currentLevel.cameraUp[1], currentLevel.cameraUp[2]); // up
-        Matrix.setIdentityM(mMatrixViewLight, 0);
-        Matrix.translateM(mMatrixViewLight, 0,
-                0, -0, -0);
+
         /**
          * Actual scene rendering.
          */

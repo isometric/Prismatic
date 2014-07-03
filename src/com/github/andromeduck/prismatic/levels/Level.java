@@ -53,8 +53,8 @@ public abstract class Level {
         cameraPosition[1] = playerPos[1] + 8f;
         cameraPosition[2] = playerPos[2] + 8f;
 
-        cameraUp[0] = 0;
+        cameraUp[0] = 0.1f;
         cameraUp[1] = 1;
-        cameraUp[2] = 0;
+        cameraUp[2] = 0.1f;
     }
 }
