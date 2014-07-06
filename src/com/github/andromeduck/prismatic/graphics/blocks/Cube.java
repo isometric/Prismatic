@@ -29,7 +29,7 @@ public class Cube implements Drawable {
     private static ByteBuffer mBufferNormalsShadow;
     private static ByteBuffer mBufferVertices;
     private static ByteBuffer mBufferVerticesShadow;
-    private static final float SQRT_2 = (float) Math.sqrt(2);
+    private static final float SQRT_2 = 1.41421356237f;
 
     static {
         // Vertex and normal data plus indices arrays.
@@ -131,8 +131,7 @@ public class Cube implements Drawable {
     private final float[] matrixScale = new float[16];
     private final float[] matrixTranslate = new float[16];
     private final float[] matrixParentModel = new float[16];
-    private boolean recalculationNeeded;
-    private boolean parentModelMChanged;
+    private boolean recalculationNeeded = true;
     private final float[] position = new float[3];
     private float scale = 0;
 
@@ -141,6 +140,7 @@ public class Cube implements Drawable {
         Matrix.setIdentityM(matrixScale, 0);
         Matrix.setIdentityM(matrixTranslate, 0);
         Matrix.setIdentityM(matrixModel, 0);
+        Matrix.setIdentityM(matrixParentModel, 0);
         boundingSphere[3] = SQRT_2;
 
         // scale cube to size 1
@@ -162,11 +162,8 @@ public class Cube implements Drawable {
         if (recalculationNeeded) {
             Matrix.multiplyMM(matrixModel, 0, matrixRotate, 0, matrixScale, 0);
             Matrix.multiplyMM(matrixModel, 0, matrixTranslate, 0, matrixModel, 0);
-            recalculationNeeded = false;
-        }
-        if (parentModelMChanged) {
             Matrix.multiplyMM(matrixModel, 0, matrixParentModel, 0, matrixModel, 0);
-            parentModelMChanged = false;
+            recalculationNeeded = false;
         }
         return matrixModel;
     }
@@ -184,6 +181,10 @@ public class Cube implements Drawable {
     @Override
     public void setScale(float scale) {
         this.scale = scale;
+
+        // scale base cube to size 1 instead of 2
+        scale *= 0.5;
+
         Matrix.setIdentityM(matrixScale, 0);
         Matrix.scaleM(matrixScale, 0, scale, scale, scale);
         boundingSphere[3] = SQRT_2 * scale;
@@ -214,6 +215,6 @@ public class Cube implements Drawable {
     @Override
     public void setParentModelM(float[] newParentModelMatrix){
         System.arraycopy(newParentModelMatrix, 0, matrixParentModel, 0, 16);
-        parentModelMChanged = true;
+        recalculationNeeded = true;
     }
 }

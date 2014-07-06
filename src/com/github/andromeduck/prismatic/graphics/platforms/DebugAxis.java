@@ -5,10 +5,8 @@ import com.github.andromeduck.prismatic.graphics.blocks.Drawable;
 
 public class DebugAxis extends Platform {
 
-    public DebugAxis() {
-
-
-
+    @Override
+    public void init() {
         Drawable cube0 = new Cube();
         cube0.setColor(new float[]{.1f, .1f, .1f});
         cube0.setPosition(new float[]{0,0,0});

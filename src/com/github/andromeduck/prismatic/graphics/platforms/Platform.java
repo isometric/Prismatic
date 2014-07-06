@@ -15,11 +15,12 @@ public abstract class Platform {
 
     private final float[] boundingSphere = new float[4];
     private final float[] matrixTranslate = new float[16];
-    public boolean positonChanged;
     private final float[] position = new float[3];
-    private float scale = 0;
+
 
     public Platform(){
+        init();
+
         allDrawables.addAll(blocks);
         allDrawables.addAll(decorations);
 
@@ -32,10 +33,12 @@ public abstract class Platform {
         }
         boundingSphere[3] = Math.max(maxPos[0], Math.max(maxPos[1], maxPos[2])) + 0.5f;
     }
+
+    public abstract void init();
+
     public List<Drawable> getDrawables() {
         return allDrawables;
     }
-
 
     public void update() {};
 

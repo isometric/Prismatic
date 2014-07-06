@@ -6,7 +6,8 @@ import com.github.andromeduck.prismatic.graphics.blocks.Drawable;
 
 public class CubeMap extends Platform {
 
-    public CubeMap() {
+    @Override
+    public void init() {
         //fake skybox made out of six cubes
         float[] skyboxColor = {0.5f,0.5f,0.5f};
         float skyboxScale = 30f;
