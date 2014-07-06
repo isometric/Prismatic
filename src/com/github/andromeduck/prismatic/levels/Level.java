@@ -1,5 +1,7 @@
 package com.github.andromeduck.prismatic.levels;
 
+import android.opengl.Matrix;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,10 +20,10 @@ public abstract class Level {
 
     public float[] lightPosition = new float[3];
     public float[] foregroundColor = new float[4];
+    public final List<Platform> platforms = new ArrayList<Platform>();
 
     // TODO: create player class
     public final Drawable player = new Cube();
-    public final List<Platform> platforms = new ArrayList<Platform>();
 
 
     public List<Drawable> getDrawables() {
@@ -38,7 +40,11 @@ public abstract class Level {
 
     public abstract int getRenderMode();
 
-    public abstract void update(float t, float[] inputDir);
+    public void update(float deltaTime){
+        for (Platform p : platforms){
+            p.update();
+        }
+    }
 
     public void updateCamera() {
         float[] playerPos = player.getPosition();

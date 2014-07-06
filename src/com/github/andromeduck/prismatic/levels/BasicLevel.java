@@ -16,7 +16,7 @@
 
 package com.github.andromeduck.prismatic.levels;
 
-import com.github.andromeduck.prismatic.graphics.blocks.Cube;
+import com.github.andromeduck.prismatic.graphics.SceneManager;
 import com.github.andromeduck.prismatic.graphics.blocks.Drawable;
 import com.github.andromeduck.prismatic.graphics.platforms.CubeMap;
 import com.github.andromeduck.prismatic.graphics.platforms.DebugAxis;
@@ -33,7 +33,7 @@ public class BasicLevel extends Level {
         //TODO: generic platform dictionary
         List<Drawable> platform0 = new ArrayList<Drawable>();
 
-        player.setColor(.4f, .4f, .4f);
+        player.setColor(new float[]{.4f, .4f, .4f});
 
 
         platforms.add(new DebugAxis());
@@ -46,13 +46,15 @@ public class BasicLevel extends Level {
     }
 
     @Override
-    public void update(float t, float[] inputDir) {
+    public void update(float deltaTime) {
         float[] playerPosPrev = player.getPosition();
 
+        playerPosPrev[0] += SceneManager.inputDir[0];
+        playerPosPrev[1] += SceneManager.inputDir[1];
+        playerPosPrev[2] += SceneManager.inputDir[2];
 
-        player.setPosition(inputDir[0] + playerPosPrev[0],
-                inputDir[1] + playerPosPrev[1],
-                inputDir[2] + playerPosPrev[2]);
+        player.setPosition(playerPosPrev);
+        platforms.get(0).setPosition(SceneManager.inputDir);
         updateCamera();
 
     }

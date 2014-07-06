@@ -1,8 +1,6 @@
 package com.github.andromeduck.prismatic.graphics.blocks;
 
-/**
- * Created by t-jadeng on 6/30/2014.
- */
+
 public interface Drawable {
     float[] getBoundingSphere();
 
@@ -10,7 +8,9 @@ public interface Drawable {
 
     float[] getModelM();
 
-    void setColor(float r, float g, float b);
+    void setParentModelM(float[] newParentModelMatrix);
+
+    void setColor(float[] newColor);
 
     void setRotate(float rx, float ry, float rz);
 
@@ -18,7 +18,8 @@ public interface Drawable {
 
     float getScale();
 
-    void setPosition(float tx, float ty, float tz);
+    void setPosition(float[] newPosition);
 
     float[] getPosition();
+
 }

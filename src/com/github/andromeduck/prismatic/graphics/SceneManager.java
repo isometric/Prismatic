@@ -46,7 +46,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
 
 
     private long PrevTime;
-    public final float[] inputDir = new float[3];
+    public static final float[] inputDir = new float[3];
 
 
     private final FBO mFboCubeMap = new FBO();
@@ -207,7 +207,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
         // TODO figure out how to change draw distance, stencil/depth buffer values.
         float deltaTime = (float) (System.currentTimeMillis() - PrevTime);
         PrevTime += deltaTime;
-        currentLevel.update(deltaTime, inputDir);
+        currentLevel.update(deltaTime);
 
 
         Matrix.setLookAtM(mMatrixView, 0,
