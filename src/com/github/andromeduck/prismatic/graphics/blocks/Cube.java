@@ -29,7 +29,7 @@ public class Cube implements Drawable {
     private static ByteBuffer mBufferNormalsShadow;
     private static ByteBuffer mBufferVertices;
     private static ByteBuffer mBufferVerticesShadow;
-    private static final float SQRT_2 = 1.41421356237f;
+    private static final float SQRT_2 = (float) Math.sqrt(2);
 
     static {
         // Vertex and normal data plus indices arrays.
@@ -124,22 +124,24 @@ public class Cube implements Drawable {
         return mBufferVerticesShadow;
     }
 
-    private final float[] mBoundingSphere = new float[4];
-    private final float[] mColor = new float[3];
-    private final float[] mMatrixModel = new float[16];
-    private final float[] mMatrixRotate = new float[16];
-    private final float[] mMatrixScale = new float[16];
-    private final float[] mMatrixTranslate = new float[16];
-    private boolean mRecalculate;
+    private final float[] boundingSphere = new float[4];
+    private final float[] color = new float[3];
+    private final float[] matrixModel = new float[16];
+    private final float[] matrixRotate = new float[16];
+    private final float[] matrixScale = new float[16];
+    private final float[] matrixTranslate = new float[16];
+    private final float[] matrixParentModel = new float[16];
+    private boolean recalculationNeeded;
+    private boolean parentModelMChanged;
     private final float[] position = new float[3];
     private float scale = 0;
 
     public Cube() {
-        Matrix.setIdentityM(mMatrixRotate, 0);
-        Matrix.setIdentityM(mMatrixScale, 0);
-        Matrix.setIdentityM(mMatrixTranslate, 0);
-        Matrix.setIdentityM(mMatrixModel, 0);
-        mBoundingSphere[3] = SQRT_2;
+        Matrix.setIdentityM(matrixRotate, 0);
+        Matrix.setIdentityM(matrixScale, 0);
+        Matrix.setIdentityM(matrixTranslate, 0);
+        Matrix.setIdentityM(matrixModel, 0);
+        boundingSphere[3] = SQRT_2;
 
         // scale cube to size 1
         setScale(1);
@@ -147,50 +149,45 @@ public class Cube implements Drawable {
 
     @Override
     public float[] getBoundingSphere() {
-        return mBoundingSphere;
+        return boundingSphere;
     }
 
     @Override
     public float[] getColor() {
-        return mColor;
+        return color;
     }
 
     @Override
     public float[] getModelM() {
-        if (mRecalculate) {
-            Matrix.multiplyMM(mMatrixModel, 0, mMatrixRotate, 0, mMatrixScale,
-                    0);
-            Matrix.multiplyMM(mMatrixModel, 0, mMatrixTranslate, 0,
-                    mMatrixModel, 0);
-            mRecalculate = false;
+        if (recalculationNeeded) {
+            Matrix.multiplyMM(matrixModel, 0, matrixRotate, 0, matrixScale, 0);
+            Matrix.multiplyMM(matrixModel, 0, matrixTranslate, 0, matrixModel, 0);
+            recalculationNeeded = false;
         }
-        return mMatrixModel;
+        if (parentModelMChanged) {
+            Matrix.multiplyMM(matrixModel, 0, matrixParentModel, 0, matrixModel, 0);
+            parentModelMChanged = false;
+        }
+        return matrixModel;
     }
 
     @Override
-    public void setColor(float r, float g, float b) {
-        mColor[0] = r;
-        mColor[1] = g;
-        mColor[2] = b;
+    public void setColor(float[] newColor) {
+        System.arraycopy(newColor, 0, color, 0, 3);
     }
 
-    @Override
     public void setRotate(float rx, float ry, float rz) {
-        MathUtils.setRotateM(mMatrixRotate, rx, ry, rz);
-        mRecalculate = true;
+        MathUtils.setRotateM(matrixRotate, rx, ry, rz);
+        recalculationNeeded = true;
     }
 
     @Override
     public void setScale(float scale) {
         this.scale = scale;
-
-        // scale base cube to size 1 instead of 2
-        scale *= 0.5;
-
-        Matrix.setIdentityM(mMatrixScale, 0);
-        Matrix.scaleM(mMatrixScale, 0, scale, scale, scale);
-        mBoundingSphere[3] = SQRT_2 * scale;
-        mRecalculate = true;
+        Matrix.setIdentityM(matrixScale, 0);
+        Matrix.scaleM(matrixScale, 0, scale, scale, scale);
+        boundingSphere[3] = SQRT_2 * scale;
+        recalculationNeeded = true;
     }
 
     @Override
@@ -199,21 +196,24 @@ public class Cube implements Drawable {
     }
 
     @Override
-    public void setPosition(float tx, float ty, float tz) {
-        position[0] = tx;
-        position[1] = ty;
-        position[2] = tz;
+    public void setPosition(float[] newPosition) {
+        System.arraycopy(newPosition, 0, position, 0, 3);
+        System.arraycopy(position, 0, boundingSphere, 0, 3);
 
-        Matrix.setIdentityM(mMatrixTranslate, 0);
-        Matrix.translateM(mMatrixTranslate, 0, tx, ty, tz);
-        mBoundingSphere[0] = tx;
-        mBoundingSphere[1] = ty;
-        mBoundingSphere[2] = tz;
-        mRecalculate = true;
+        Matrix.setIdentityM(matrixTranslate, 0);
+        Matrix.translateM(matrixTranslate, 0, position[0], position[1], position[2]);
+        recalculationNeeded = true;
     }
 
     @Override
     public float[] getPosition() {
         return position;
+    }
+
+
+    @Override
+    public void setParentModelM(float[] newParentModelMatrix){
+        System.arraycopy(newParentModelMatrix, 0, matrixParentModel, 0, 16);
+        parentModelMChanged = true;
     }
 }
