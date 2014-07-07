@@ -10,15 +10,15 @@ public interface Drawable {
 
     void setParentModelM(float[] newParentModelMatrix);
 
-    void setColor(float[] newColor);
+    void setColor(float[] color);
 
-    void setRotate(float rx, float ry, float rz);
+    void setRotate(float[] rotation);
 
-    void setScale(float scale);
+    void setScale(float[] scale);
 
-    float getScale();
+    float[] getScale();
 
-    void setPosition(float[] newPosition);
+    void setPosition(float[] position);
 
     float[] getPosition();
 

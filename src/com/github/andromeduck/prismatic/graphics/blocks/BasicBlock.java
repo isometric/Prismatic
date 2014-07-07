@@ -22,14 +22,14 @@ import android.opengl.Matrix;
 
 import com.github.andromeduck.prismatic.graphics.MathUtils;
 
-public class Cube implements Drawable {
+public class BasicBlock implements Drawable {
 
     private static ByteBuffer mBufferNormals;
     private static ByteBuffer mBufferNormalsInv;
     private static ByteBuffer mBufferNormalsShadow;
     private static ByteBuffer mBufferVertices;
     private static ByteBuffer mBufferVerticesShadow;
-    private static final float SQRT_2 = 1.41421356237f;
+    private static final float SQRT_2 = (float) Math.sqrt(2);
 
     static {
         // Vertex and normal data plus indices arrays.
@@ -133,9 +133,9 @@ public class Cube implements Drawable {
     private final float[] matrixParentModel = new float[16];
     private boolean recalculationNeeded = true;
     private final float[] position = new float[3];
-    private float scale = 0;
+    private final float[] scale = new float[3];
 
-    public Cube() {
+    public BasicBlock() {
         Matrix.setIdentityM(matrixRotate, 0);
         Matrix.setIdentityM(matrixScale, 0);
         Matrix.setIdentityM(matrixTranslate, 0);
@@ -144,7 +144,7 @@ public class Cube implements Drawable {
         boundingSphere[3] = SQRT_2;
 
         // scale cube to size 1
-        setScale(1);
+        setScale(new float[]{1,1,1});
     }
 
     @Override
@@ -173,26 +173,29 @@ public class Cube implements Drawable {
         System.arraycopy(newColor, 0, color, 0, 3);
     }
 
-    public void setRotate(float rx, float ry, float rz) {
-        MathUtils.setRotateM(matrixRotate, rx, ry, rz);
+    public void setRotate(float[] newRotation) {
+        MathUtils.setRotateM(matrixRotate, newRotation[0], newRotation[1], newRotation[2]);
         recalculationNeeded = true;
     }
 
     @Override
-    public void setScale(float scale) {
-        this.scale = scale;
+    public void setScale(float[] scale) {
+        System.arraycopy(scale, 0, this.scale, 0, 3);
 
-        // scale base cube to size 1 instead of 2
-        scale *= 0.5;
-
+        // Scale down by 1/2 so cube edge is 1.f
         Matrix.setIdentityM(matrixScale, 0);
-        Matrix.scaleM(matrixScale, 0, scale, scale, scale);
-        boundingSphere[3] = SQRT_2 * scale;
+        Matrix.scaleM(matrixScale, 0, scale[0]*0.5f, scale[1]*0.5f, scale[2]*0.5f);
+
+
+        boundingSphere[3] = 0.5f * (float) Math.sqrt(
+                                Math.pow(scale[0],2.f) +
+                                Math.pow(scale[1],2.f) +
+                                Math.pow(scale[2],2.f));
         recalculationNeeded = true;
     }
 
     @Override
-    public float getScale() {
+    public float[] getScale() {
         return scale;
     }
 

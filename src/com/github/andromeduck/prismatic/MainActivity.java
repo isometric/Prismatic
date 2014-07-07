@@ -41,7 +41,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        // Create media player object.
+        // Create media playerBlock object.
         mediaPlayer = MediaPlayer.create(this, R.raw.music);
         mediaPlayer.setLooping(false);
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {

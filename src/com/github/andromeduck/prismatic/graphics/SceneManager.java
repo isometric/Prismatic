@@ -24,7 +24,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import com.github.andromeduck.prismatic.R;
-import com.github.andromeduck.prismatic.graphics.blocks.Cube;
+import com.github.andromeduck.prismatic.graphics.blocks.BasicBlock;
 import com.github.andromeduck.prismatic.graphics.blocks.Drawable;
 import com.github.andromeduck.prismatic.levels.Level;
 import com.github.andromeduck.prismatic.levels.BasicLevel;
@@ -77,7 +77,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
     private final Shader mShaderStencilMask = new Shader();
 
     // code for drawing inverted skybox
-    //private final Drawable mSkybox = new Cube();
+    //private final Drawable mSkybox = new BasicBlock();
 
     private int viewportWidth, viewportHeight;
 
@@ -207,7 +207,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
         // TODO figure out how to change draw distance, stencil/depth buffer values.
         float deltaTime = (float) (System.currentTimeMillis() - PrevTime);
         PrevTime += deltaTime;
-        currentLevel.update(deltaTime);
+        currentLevel.update(deltaTime, inputDir);
 
 
         Matrix.setLookAtM(mMatrixView, 0,
@@ -423,7 +423,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
         GLES30.glUniformMatrix4fv(uProjM, 1, false, mMatrixProjectionDepth, 0);
 
         GLES30.glVertexAttribPointer(aPosition, 3, GLES30.GL_BYTE, false, 0,
-                Cube.getVertices());
+                BasicBlock.getVertices());
         GLES30.glEnableVertexAttribArray(aPosition);
 
         GLES30.glEnable(GLES30.GL_CULL_FACE);
@@ -468,11 +468,11 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
         GLES30.glUniform3fv(uLightPos, 1, currentLevel.lightPosition, 0);
 
         GLES30.glVertexAttribPointer(aPosition, 3, GLES30.GL_BYTE, false, 0,
-                Cube.getVertices());
+                BasicBlock.getVertices());
         GLES30.glEnableVertexAttribArray(aPosition);
 
         GLES30.glVertexAttribPointer(aNormal, 3, GLES30.GL_BYTE, false, 0,
-                Cube.getNormals());
+                BasicBlock.getNormals());
         GLES30.glEnableVertexAttribArray(aNormal);
 
         if (renderMode == Level.MODE_SHADOWMAP) {
@@ -508,7 +508,7 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
         GLES30.glUniform3f(uColor, .5f, .5f, .5f);
 
         GLES30.glVertexAttribPointer(aNormal, 3, GLES30.GL_BYTE, false, 0,
-                Cube.getNormalsInv());
+                BasicBlock.getNormalsInv());
         GLES30.glEnableVertexAttribArray(aNormal);
 
         GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6 * 6);
@@ -533,11 +533,11 @@ public final class SceneManager extends GLSurfaceView implements GLSurfaceView.R
         GLES30.glUniform3fv(uLightPosition, 1, currentLevel.lightPosition, 0);
 
         GLES30.glVertexAttribPointer(aPosition, 4, GLES30.GL_BYTE, false, 0,
-                Cube.getVerticesShadow());
+                BasicBlock.getVerticesShadow());
         GLES30.glEnableVertexAttribArray(aPosition);
 
         GLES30.glVertexAttribPointer(aNormal, 3, GLES30.GL_BYTE, false, 0,
-                Cube.getNormalsShadow());
+                BasicBlock.getNormalsShadow());
         GLES30.glEnableVertexAttribArray(aNormal);
 
         GLES30.glDisable(GLES30.GL_CULL_FACE);

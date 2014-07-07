@@ -9,9 +9,9 @@ import java.util.List;
 
 public abstract class Platform {
 
-    public final List<Drawable> blocks = new ArrayList<Drawable>();
-    public final List<Drawable> decorations = new ArrayList<Drawable>();
-    public final List<Drawable> allDrawables = new ArrayList<Drawable>();
+    protected final List<Drawable> blocks = new ArrayList<Drawable>();
+    protected final List<Drawable> decorations = new ArrayList<Drawable>();
+    protected final List<Drawable> allDrawables = new ArrayList<Drawable>();
 
     private final float[] boundingSphere = new float[4];
     private final float[] matrixTranslate = new float[16];
@@ -39,6 +39,10 @@ public abstract class Platform {
     public List<Drawable> getDrawables() {
         return allDrawables;
     }
+
+    public List<Drawable> getBlocks() { return blocks; }
+
+    public List<Drawable> getDecorations() { return decorations; }
 
     public void update() {};
 
